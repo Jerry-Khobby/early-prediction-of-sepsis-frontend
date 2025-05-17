@@ -1,54 +1,58 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Download, Mail, FileText, Settings, Eye, Loader2 } from "lucide-react"
-import { motion } from "framer-motion"
-import { PDFPreview } from "@/components/pdf-preview"
-import { downloadPDF, emailPDF, type PDFOptions } from "@/components/pdf-service"
-import { useToast } from "@/components/ui/use-toast"
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Download, Mail, FileText, Settings, Eye, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
+import { PDFPreview } from "@/components/pdf-preview";
+import {
+  downloadPDF,
+  emailPDF,
+  type PDFOptions,
+} from "@/components/pdf-service";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function ExportPage() {
-  const { toast } = useToast()
-  const [email, setEmail] = useState("")
-  const [isDownloading, setIsDownloading] = useState(false)
-  const [isEmailing, setIsEmailing] = useState(false)
+  const { toast } = useToast();
+  const [email, setEmail] = useState("");
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isEmailing, setIsEmailing] = useState(false);
   const [includeOptions, setIncludeOptions] = useState({
     summary: true,
     riskAssessment: true,
     modelExplanation: true,
     recommendations: true,
     patientData: true,
-  })
+  });
 
   const handleOptionChange = (option: keyof typeof includeOptions) => {
     setIncludeOptions((prev) => ({
       ...prev,
       [option]: !prev[option],
-    }))
-  }
+    }));
+  };
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!email) {
       toast({
         title: "Email Required",
         description: "Please enter an email address to send the report.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
     try {
-      setIsEmailing(true)
+      setIsEmailing(true);
 
       const options: PDFOptions = {
         includeOptions,
@@ -60,28 +64,28 @@ export default function ExportPage() {
           admissionDate: "2024-05-08",
           department: "Emergency Medicine",
         },
-      }
+      };
 
-      await emailPDF(options, email)
+      await emailPDF(options, email);
 
       toast({
         title: "Email Sent",
         description: `The report has been sent to ${email}`,
-      })
+      });
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to send email. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsEmailing(false)
+      setIsEmailing(false);
     }
-  }
+  };
 
   const handleDownload = async () => {
     try {
-      setIsDownloading(true)
+      setIsDownloading(true);
 
       const options: PDFOptions = {
         includeOptions,
@@ -93,40 +97,45 @@ export default function ExportPage() {
           admissionDate: "2024-05-08",
           department: "Emergency Medicine",
         },
-      }
+      };
 
-      await downloadPDF(options, `sepsis-report-${new Date().toISOString().split("T")[0]}.pdf`)
+      await downloadPDF(
+        options,
+        `sepsis-report-${new Date().toISOString().split("T")[0]}.pdf`
+      );
 
       toast({
         title: "Download Complete",
         description: "Your PDF report has been downloaded successfully.",
-      })
+      });
     } catch (error) {
       toast({
         title: "Download Failed",
-        description: "There was an error generating your PDF. Please try again.",
+        description:
+          "There was an error generating your PDF. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsDownloading(false)
+      setIsDownloading(false);
     }
-  }
+  };
 
   const handlePrintPreview = () => {
     // Open a new window with just the PDF preview for printing
-    const printWindow = window.open("", "_blank")
+    const printWindow = window.open("", "_blank");
     if (!printWindow) {
       toast({
         title: "Print Failed",
-        description: "Unable to open print preview. Please check your popup blocker settings.",
+        description:
+          "Unable to open print preview. Please check your popup blocker settings.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
     // Get the PDF preview content
-    const previewElement = document.getElementById("pdf-preview")
-    if (!previewElement) return
+    const previewElement = document.getElementById("pdf-preview");
+    if (!previewElement) return;
 
     // Write the content to the new window
     printWindow.document.write(`
@@ -147,10 +156,10 @@ export default function ExportPage() {
           </script>
         </body>
       </html>
-    `)
+    `);
 
-    printWindow.document.close()
-  }
+    printWindow.document.close();
+  };
 
   return (
     <main className="container mx-auto px-4 py-12">
@@ -164,7 +173,11 @@ export default function ExportPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-6">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
               <Card>
                 <div className="p-6">
                   <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
@@ -185,31 +198,45 @@ export default function ExportPage() {
                       <Checkbox
                         id="riskAssessment"
                         checked={includeOptions.riskAssessment}
-                        onCheckedChange={() => handleOptionChange("riskAssessment")}
+                        onCheckedChange={() =>
+                          handleOptionChange("riskAssessment")
+                        }
                       />
-                      <Label htmlFor="riskAssessment">Include Risk Assessment</Label>
+                      <Label htmlFor="riskAssessment">
+                        Include Risk Assessment
+                      </Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="modelExplanation"
                         checked={includeOptions.modelExplanation}
-                        onCheckedChange={() => handleOptionChange("modelExplanation")}
+                        onCheckedChange={() =>
+                          handleOptionChange("modelExplanation")
+                        }
                       />
-                      <Label htmlFor="modelExplanation">Include Model Explanation</Label>
+                      <Label htmlFor="modelExplanation">
+                        Include Model Explanation
+                      </Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="recommendations"
                         checked={includeOptions.recommendations}
-                        onCheckedChange={() => handleOptionChange("recommendations")}
+                        onCheckedChange={() =>
+                          handleOptionChange("recommendations")
+                        }
                       />
-                      <Label htmlFor="recommendations">Include Recommendations</Label>
+                      <Label htmlFor="recommendations">
+                        Include Recommendations
+                      </Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="patientData"
                         checked={includeOptions.patientData}
-                        onCheckedChange={() => handleOptionChange("patientData")}
+                        onCheckedChange={() =>
+                          handleOptionChange("patientData")
+                        }
                       />
                       <Label htmlFor="patientData">Include Patient Data</Label>
                     </div>
@@ -249,7 +276,8 @@ export default function ExportPage() {
                     >
                       {isEmailing ? (
                         <span className="flex items-center gap-2">
-                          <Loader2 className="h-4 w-4 animate-spin" /> Sending...
+                          <Loader2 className="h-4 w-4 animate-spin" />{" "}
+                          Sending...
                         </span>
                       ) : (
                         <span className="flex items-center gap-2">
@@ -276,7 +304,8 @@ export default function ExportPage() {
               >
                 {isDownloading ? (
                   <span className="flex items-center gap-2">
-                    <Loader2 className="h-5 w-5 animate-spin" /> Generating PDF...
+                    <Loader2 className="h-5 w-5 animate-spin" /> Generating
+                    PDF...
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
@@ -303,18 +332,27 @@ export default function ExportPage() {
               <Tabs defaultValue="preview" className="h-full flex flex-col">
                 <div className="px-6 pt-6">
                   <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="preview" className="flex items-center gap-2">
+                    <TabsTrigger
+                      value="preview"
+                      className="flex items-center gap-2"
+                    >
                       <Eye className="h-4 w-4" />
                       Preview
                     </TabsTrigger>
-                    <TabsTrigger value="code" className="flex items-center gap-2">
+                    <TabsTrigger
+                      value="code"
+                      className="flex items-center gap-2"
+                    >
                       <FileText className="h-4 w-4" />
                       Raw Data
                     </TabsTrigger>
                   </TabsList>
                 </div>
 
-                <TabsContent value="preview" className="flex-1 p-6 overflow-auto">
+                <TabsContent
+                  value="preview"
+                  className="flex-1 p-6 overflow-auto"
+                >
                   <div id="pdf-preview">
                     <PDFPreview includeOptions={includeOptions} />
                   </div>
@@ -353,7 +391,10 @@ export default function ExportPage() {
                           modelExplanation: {
                             topFeatures: [
                               { name: "Respiratory Rate", importance: 0.85 },
-                              { name: "Mean Arterial Pressure", importance: 0.72 },
+                              {
+                                name: "Mean Arterial Pressure",
+                                importance: 0.72,
+                              },
                               { name: "Heart Rate", importance: 0.65 },
                               { name: "Temperature", importance: 0.58 },
                               { name: "O2 Saturation", importance: 0.45 },
@@ -361,7 +402,7 @@ export default function ExportPage() {
                           },
                         },
                         null,
-                        2,
+                        2
                       )}
                     </pre>
                   </div>
@@ -372,5 +413,5 @@ export default function ExportPage() {
         </div>
       </div>
     </main>
-  )
+  );
 }

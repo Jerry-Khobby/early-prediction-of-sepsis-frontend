@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import {
   BookOpen,
   Database,
@@ -17,14 +17,14 @@ import {
   Layers,
   Download,
   ExternalLink,
-} from "lucide-react"
-import { motion } from "framer-motion"
-import { ModelArchitecture } from "@/components/model-architecture"
-import { ModelMetrics } from "@/components/model-metrics"
-import { DatasetInfo } from "@/components/dataset-info"
+} from "lucide-react";
+import { motion } from "framer-motion";
+import { ModelArchitecture } from "@/components/model-architecture";
+import { ModelMetrics } from "@/components/model-metrics";
+import { DatasetInfo } from "@/components/dataset-info";
 
 export default function AboutPage() {
-  const [activeTab, setActiveTab] = useState("overview")
+  const [activeTab, setActiveTab] = useState("overview");
 
   return (
     <main className="container mx-auto px-4 py-12">
@@ -32,25 +32,43 @@ export default function AboutPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">About SepsisAI</h1>
           <p className="text-muted-foreground dark:text-gray-400 max-w-3xl">
-            Learn about our AI model, dataset, and the technology behind our early sepsis prediction system.
+            Learn about our AI model, dataset, and the technology behind our
+            early sepsis prediction system.
           </p>
         </div>
 
-        <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs
+          defaultValue="overview"
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-6"
+        >
           <TabsList className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-muted/50 p-1 rounded-lg">
-            <TabsTrigger value="overview" className="flex items-center gap-2 data-[state=active]:bg-background">
+            <TabsTrigger
+              value="overview"
+              className="flex items-center gap-2 data-[state=active]:bg-background"
+            >
               <BookOpen className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="dataset" className="flex items-center gap-2 data-[state=active]:bg-background">
+            <TabsTrigger
+              value="dataset"
+              className="flex items-center gap-2 data-[state=active]:bg-background"
+            >
               <Database className="h-4 w-4" />
               <span className="hidden sm:inline">Dataset</span>
             </TabsTrigger>
-            <TabsTrigger value="model" className="flex items-center gap-2 data-[state=active]:bg-background">
+            <TabsTrigger
+              value="model"
+              className="flex items-center gap-2 data-[state=active]:bg-background"
+            >
               <Layers className="h-4 w-4" />
               <span className="hidden sm:inline">Model</span>
             </TabsTrigger>
-            <TabsTrigger value="team" className="flex items-center gap-2 data-[state=active]:bg-background">
+            <TabsTrigger
+              value="team"
+              className="flex items-center gap-2 data-[state=active]:bg-background"
+            >
               <Users className="h-4 w-4" />
               <span className="hidden sm:inline">Team</span>
             </TabsTrigger>
@@ -58,7 +76,11 @@ export default function AboutPage() {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
               <Card className="p-6">
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
@@ -76,25 +98,37 @@ export default function AboutPage() {
                     </Badge>
                   </div>
 
-                  <h2 className="text-2xl font-bold">SepsisAI: Early Sepsis Prediction System</h2>
+                  <h2 className="text-2xl font-bold">
+                    SepsisAI: Early Sepsis Prediction System
+                  </h2>
 
                   <p className="text-muted-foreground dark:text-gray-300">
-                    SepsisAI is an advanced machine learning system designed to predict sepsis onset up to 6 hours
-                    before clinical recognition. The model analyzes time-series patient data including vital signs and
-                    laboratory results to identify patterns indicative of developing sepsis.
+                    SepsisAI is an advanced machine learning system designed to
+                    predict sepsis onset up to 6 hours before clinical
+                    recognition. The model analyzes time-series patient data
+                    including vital signs and laboratory results to identify
+                    patterns indicative of developing sepsis.
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                     <div className="flex flex-col gap-1.5">
-                      <span className="text-sm font-medium text-muted-foreground">Model Type</span>
-                      <span className="font-medium">Ensemble (XGBoost + LSTM)</span>
+                      <span className="text-sm font-medium text-muted-foreground">
+                        Model Type
+                      </span>
+                      <span className="font-medium">
+                        Ensemble (XGBoost + LSTM)
+                      </span>
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <span className="text-sm font-medium text-muted-foreground">Accuracy</span>
+                      <span className="text-sm font-medium text-muted-foreground">
+                        Accuracy
+                      </span>
                       <span className="font-medium">92.7% (Test Set)</span>
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <span className="text-sm font-medium text-muted-foreground">Last Updated</span>
+                      <span className="text-sm font-medium text-muted-foreground">
+                        Last Updated
+                      </span>
                       <span className="font-medium">March 2024</span>
                     </div>
                   </div>
@@ -104,11 +138,19 @@ export default function AboutPage() {
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold">Key Features</h3>
                     <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 list-disc pl-5">
-                      <li>Early detection up to 6 hours before clinical signs</li>
-                      <li>Continuous monitoring and real-time risk assessment</li>
-                      <li>Explainable AI with feature importance visualization</li>
+                      <li>
+                        Early detection up to 6 hours before clinical signs
+                      </li>
+                      <li>
+                        Continuous monitoring and real-time risk assessment
+                      </li>
+                      <li>
+                        Explainable AI with feature importance visualization
+                      </li>
                       <li>Integration with hospital EHR systems</li>
-                      <li>Personalized risk thresholds based on patient history</li>
+                      <li>
+                        Personalized risk thresholds based on patient history
+                      </li>
                       <li>Treatment recommendation system</li>
                     </ul>
                   </div>
@@ -142,27 +184,37 @@ export default function AboutPage() {
                 <h3 className="text-xl font-semibold mb-4">Clinical Impact</h3>
                 <div className="space-y-4">
                   <p className="text-muted-foreground dark:text-gray-300">
-                    Sepsis affects approximately 1.7 million adults in the United States each year and is responsible
-                    for nearly 270,000 deaths. Early detection and treatment are critical, with each hour of delayed
-                    treatment increasing mortality by 4-8%.
+                    Sepsis affects approximately 1.7 million adults in the
+                    United States each year and is responsible for nearly
+                    270,000 deaths. Early detection and treatment are critical,
+                    with each hour of delayed treatment increasing mortality by
+                    4-8%.
                   </p>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
                     <div className="bg-teal-50 dark:bg-teal-900/20 p-4 rounded-lg">
-                      <div className="text-3xl font-bold text-teal-600 dark:text-teal-400 mb-1">48%</div>
+                      <div className="text-3xl font-bold text-teal-600 dark:text-teal-400 mb-1">
+                        48%
+                      </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">
                         Reduction in time to sepsis recognition
                       </div>
                     </div>
                     <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg">
-                      <div className="text-3xl font-bold text-amber-600 dark:text-amber-400 mb-1">32%</div>
+                      <div className="text-3xl font-bold text-amber-600 dark:text-amber-400 mb-1">
+                        32%
+                      </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">
                         Decrease in sepsis-related mortality
                       </div>
                     </div>
                     <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-lg">
-                      <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-1">$4.2M</div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">Annual savings per hospital (est.)</div>
+                      <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-1">
+                        $4.2M
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        Annual savings per hospital (est.)
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -172,14 +224,21 @@ export default function AboutPage() {
 
           {/* Dataset Tab */}
           <TabsContent value="dataset" className="space-y-6">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
               <Card className="p-6">
                 <div className="flex items-start justify-between flex-wrap gap-4">
                   <div>
-                    <h2 className="text-2xl font-bold mb-2">Training Dataset</h2>
+                    <h2 className="text-2xl font-bold mb-2">
+                      Training Dataset
+                    </h2>
                     <p className="text-muted-foreground dark:text-gray-300 max-w-3xl">
-                      Our model was trained on the PhysioNet Computing in Cardiology Challenge 2019 dataset, augmented
-                      with additional hospital data from our research partners.
+                      Our model was trained on the PhysioNet Computing in
+                      Cardiology Challenge 2019 dataset, augmented with
+                      additional hospital data from our research partners.
                     </p>
                   </div>
                   <Button
@@ -195,30 +254,42 @@ export default function AboutPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Dataset Composition</h3>
+                    <h3 className="text-lg font-semibold">
+                      Dataset Composition
+                    </h3>
                     <DatasetInfo />
 
                     <div className="mt-6">
                       <h4 className="font-medium mb-2">Key Statistics</h4>
                       <ul className="space-y-2">
                         <li className="flex justify-between">
-                          <span className="text-muted-foreground">Total patients:</span>
+                          <span className="text-muted-foreground">
+                            Total patients:
+                          </span>
                           <span className="font-medium">40,336</span>
                         </li>
                         <li className="flex justify-between">
-                          <span className="text-muted-foreground">Sepsis cases:</span>
+                          <span className="text-muted-foreground">
+                            Sepsis cases:
+                          </span>
                           <span className="font-medium">2,932 (7.3%)</span>
                         </li>
                         <li className="flex justify-between">
-                          <span className="text-muted-foreground">Non-sepsis cases:</span>
+                          <span className="text-muted-foreground">
+                            Non-sepsis cases:
+                          </span>
                           <span className="font-medium">37,404 (92.7%)</span>
                         </li>
                         <li className="flex justify-between">
-                          <span className="text-muted-foreground">Time series length (avg):</span>
+                          <span className="text-muted-foreground">
+                            Time series length (avg):
+                          </span>
                           <span className="font-medium">48 hours</span>
                         </li>
                         <li className="flex justify-between">
-                          <span className="text-muted-foreground">Sampling frequency:</span>
+                          <span className="text-muted-foreground">
+                            Sampling frequency:
+                          </span>
                           <span className="font-medium">1 hour</span>
                         </li>
                       </ul>
@@ -228,8 +299,9 @@ export default function AboutPage() {
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold">Features</h3>
                     <p className="text-muted-foreground dark:text-gray-300">
-                      The dataset includes 40 clinical variables collected at regular intervals, including vital signs,
-                      laboratory values, and demographic information.
+                      The dataset includes 40 clinical variables collected at
+                      regular intervals, including vital signs, laboratory
+                      values, and demographic information.
                     </p>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 mt-2">
@@ -266,7 +338,10 @@ export default function AboutPage() {
                         Data Preprocessing
                       </h4>
                       <ul className="mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                        <li>• Missing value imputation using forward-fill and median values</li>
+                        <li>
+                          • Missing value imputation using forward-fill and
+                          median values
+                        </li>
                         <li>• Outlier detection and removal (IQR method)</li>
                         <li>• Feature normalization (z-score)</li>
                         <li>• Time series alignment and resampling</li>
@@ -281,12 +356,17 @@ export default function AboutPage() {
 
           {/* Model Tab */}
           <TabsContent value="model" className="space-y-6">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
               <Card className="p-6">
                 <h2 className="text-2xl font-bold mb-2">Model Architecture</h2>
                 <p className="text-muted-foreground dark:text-gray-300 max-w-3xl mb-6">
-                  SepsisAI uses a hybrid ensemble approach combining gradient boosting (XGBoost) for tabular data and
-                  recurrent neural networks (LSTM) for temporal patterns.
+                  SepsisAI uses a hybrid ensemble approach combining gradient
+                  boosting (XGBoost) for tabular data and recurrent neural
+                  networks (LSTM) for temporal patterns.
                 </p>
 
                 <div className="mb-8">
@@ -301,7 +381,8 @@ export default function AboutPage() {
                       <div className="p-4 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-700">
                         <h4 className="font-medium mb-2">XGBoost Component</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                          Processes static features and aggregated time-series data to capture non-linear relationships.
+                          Processes static features and aggregated time-series
+                          data to capture non-linear relationships.
                         </p>
                         <ul className="text-sm space-y-1 text-gray-600 dark:text-gray-400">
                           <li>• 500 trees with max depth of 6</li>
@@ -314,10 +395,13 @@ export default function AboutPage() {
                       <div className="p-4 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-700">
                         <h4 className="font-medium mb-2">LSTM Component</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                          Processes temporal data to capture time-dependent patterns and trends in vital signs.
+                          Processes temporal data to capture time-dependent
+                          patterns and trends in vital signs.
                         </p>
                         <ul className="text-sm space-y-1 text-gray-600 dark:text-gray-400">
-                          <li>• 2 bidirectional LSTM layers (128 units each)</li>
+                          <li>
+                            • 2 bidirectional LSTM layers (128 units each)
+                          </li>
                           <li>• Dropout: 0.3</li>
                           <li>• Recurrent dropout: 0.2</li>
                           <li>• Attention mechanism for key time points</li>
@@ -325,21 +409,31 @@ export default function AboutPage() {
                       </div>
 
                       <div className="p-4 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                        <h4 className="font-medium mb-2">Ensemble Integration</h4>
+                        <h4 className="font-medium mb-2">
+                          Ensemble Integration
+                        </h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                          Combines predictions from both models using a meta-learner for final risk assessment.
+                          Combines predictions from both models using a
+                          meta-learner for final risk assessment.
                         </p>
                         <ul className="text-sm space-y-1 text-gray-600 dark:text-gray-400">
-                          <li>• Stacked ensemble with logistic regression meta-learner</li>
+                          <li>
+                            • Stacked ensemble with logistic regression
+                            meta-learner
+                          </li>
                           <li>• Calibrated using Platt scaling</li>
-                          <li>• Confidence intervals via bootstrap aggregation</li>
+                          <li>
+                            • Confidence intervals via bootstrap aggregation
+                          </li>
                         </ul>
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Performance Metrics</h3>
+                    <h3 className="text-lg font-semibold">
+                      Performance Metrics
+                    </h3>
                     <ModelMetrics />
 
                     <div className="mt-6 p-4 bg-teal-50 dark:bg-teal-900/20 rounded-lg">
@@ -348,9 +442,11 @@ export default function AboutPage() {
                         Model Validation
                       </h4>
                       <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
-                        The model was validated using 5-fold cross-validation and tested on an independent test set from
-                        3 different hospitals not included in the training data. External validation showed consistent
-                        performance across different patient populations and hospital settings.
+                        The model was validated using 5-fold cross-validation
+                        and tested on an independent test set from 3 different
+                        hospitals not included in the training data. External
+                        validation showed consistent performance across
+                        different patient populations and hospital settings.
                       </p>
                     </div>
 
@@ -360,10 +456,21 @@ export default function AboutPage() {
                         Ongoing Research
                       </h4>
                       <ul className="mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                        <li>• Integration of genomic biomarkers for personalized risk assessment</li>
-                        <li>• Federated learning across multiple hospital systems</li>
-                        <li>• Reinforcement learning for treatment recommendation optimization</li>
-                        <li>• Multimodal learning incorporating clinical notes and imaging</li>
+                        <li>
+                          • Integration of genomic biomarkers for personalized
+                          risk assessment
+                        </li>
+                        <li>
+                          • Federated learning across multiple hospital systems
+                        </li>
+                        <li>
+                          • Reinforcement learning for treatment recommendation
+                          optimization
+                        </li>
+                        <li>
+                          • Multimodal learning incorporating clinical notes and
+                          imaging
+                        </li>
                       </ul>
                     </div>
                   </div>
@@ -374,7 +481,11 @@ export default function AboutPage() {
 
           {/* Team Tab */}
           <TabsContent value="team" className="space-y-6">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
               <Card className="p-6">
                 <h2 className="text-2xl font-bold mb-6">Research Team</h2>
 
@@ -435,9 +546,15 @@ export default function AboutPage() {
                         />
                       </div>
                       <h3 className="font-semibold text-lg">{member.name}</h3>
-                      <p className="text-teal-600 dark:text-teal-400 font-medium text-sm">{member.role}</p>
-                      <p className="text-muted-foreground text-sm mt-1">{member.specialty}</p>
-                      <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">{member.institution}</p>
+                      <p className="text-teal-600 dark:text-teal-400 font-medium text-sm">
+                        {member.role}
+                      </p>
+                      <p className="text-muted-foreground text-sm mt-1">
+                        {member.specialty}
+                      </p>
+                      <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">
+                        {member.institution}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -445,7 +562,9 @@ export default function AboutPage() {
                 <Separator className="my-8" />
 
                 <div className="space-y-6">
-                  <h3 className="text-xl font-semibold">Partner Institutions</h3>
+                  <h3 className="text-xl font-semibold">
+                    Partner Institutions
+                  </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                     {[
                       "Stanford Medical Center",
@@ -461,18 +580,24 @@ export default function AboutPage() {
                         key={index}
                         className="flex items-center justify-center p-4 h-20 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
                       >
-                        <span className="text-center font-medium text-gray-700 dark:text-gray-300">{institution}</span>
+                        <span className="text-center font-medium text-gray-700 dark:text-gray-300">
+                          {institution}
+                        </span>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <h3 className="text-lg font-semibold mb-2">Funding & Support</h3>
+                  <h3 className="text-lg font-semibold mb-2">
+                    Funding & Support
+                  </h3>
                   <p className="text-muted-foreground dark:text-gray-300">
-                    This research was supported by grants from the National Institutes of Health (NIH), the National
-                    Science Foundation (NSF), and the Gordon and Betty Moore Foundation. Additional support was provided
-                    by the Stanford Center for AI in Medicine and Imaging.
+                    This research was supported by grants from the National
+                    Institutes of Health (NIH), the National Science Foundation
+                    (NSF), and the Gordon and Betty Moore Foundation. Additional
+                    support was provided by the Stanford Center for AI in
+                    Medicine and Imaging.
                   </p>
                 </div>
               </Card>
@@ -481,5 +606,5 @@ export default function AboutPage() {
         </Tabs>
       </div>
     </main>
-  )
+  );
 }
