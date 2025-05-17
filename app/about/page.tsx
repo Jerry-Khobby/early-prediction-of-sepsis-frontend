@@ -43,7 +43,7 @@ export default function AboutPage() {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-muted/50 p-1 rounded-lg">
+          <TabsList className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-muted/50 p-1 rounded-lg h-20 md:h-10">
             <TabsTrigger
               value="overview"
               className="flex items-center gap-2 data-[state=active]:bg-background"
