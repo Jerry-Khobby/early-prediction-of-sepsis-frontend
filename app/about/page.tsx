@@ -37,20 +37,20 @@ export default function AboutPage() {
         </div>
 
         <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
+          <TabsList className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-muted/50 p-1 rounded-lg">
+            <TabsTrigger value="overview" className="flex items-center gap-2 data-[state=active]:bg-background">
               <BookOpen className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="dataset" className="flex items-center gap-2">
+            <TabsTrigger value="dataset" className="flex items-center gap-2 data-[state=active]:bg-background">
               <Database className="h-4 w-4" />
               <span className="hidden sm:inline">Dataset</span>
             </TabsTrigger>
-            <TabsTrigger value="model" className="flex items-center gap-2">
+            <TabsTrigger value="model" className="flex items-center gap-2 data-[state=active]:bg-background">
               <Layers className="h-4 w-4" />
               <span className="hidden sm:inline">Model</span>
             </TabsTrigger>
-            <TabsTrigger value="team" className="flex items-center gap-2">
+            <TabsTrigger value="team" className="flex items-center gap-2 data-[state=active]:bg-background">
               <Users className="h-4 w-4" />
               <span className="hidden sm:inline">Team</span>
             </TabsTrigger>
