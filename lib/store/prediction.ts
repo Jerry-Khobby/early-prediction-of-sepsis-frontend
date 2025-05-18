@@ -24,6 +24,7 @@ interface ManualPredictionResult {
     level: string;
     time_frame: string;
     interpretation: string;
+    detailed_analysis:string;
   };
   key_risk_factors: Array<{
     feature: string;
@@ -34,7 +35,11 @@ interface ManualPredictionResult {
     diagnostic_tests: string[];
     treatment_options: {
       immediate_medications: string[];
-      antibiotic_choices: Record<string, string[]>;
+      antibiotic_choices: {
+        community_acquired:string[];
+        hospital_acquired:string[];
+        pencillin_allergy:string[];
+      };
     };
     required_actions: string[];
   };
