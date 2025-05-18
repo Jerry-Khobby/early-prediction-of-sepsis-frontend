@@ -200,7 +200,7 @@ const UploadManual = () => {
             </div>
           </div>
 
-          <form className="space-y-8" onSubmit={handleSubmit(onSubmit)}>
+          <form className="space-y-8">
             {/* High Correlation Section */}
             <div className="space-y-6">
               <h4 className="text-md font-medium text-gray-700 dark:text-gray-300">
@@ -581,6 +581,10 @@ const UploadManual = () => {
           <Button
             className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600"
             disabled={!isFormValid() || isLoading}
+            onClick={(e) => {
+              e.preventDefault();
+              handleSubmit(onSubmit)();
+            }}
           >
             {isLoading ? (
               <>
