@@ -190,10 +190,13 @@ const UploadManual = () => {
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-semibold">Enter Patient Data</h3>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-muted-foreground ">
                 Form Completion: {completionPercentage}%
               </span>
-              <Progress value={completionPercentage} className="w-[100px]" />
+              <Progress
+                value={completionPercentage}
+                className="w-[100px] [&>div]:bg-[#44bfb2] "
+              />
             </div>
           </div>
 
