@@ -1,23 +1,29 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { AlertCircle, FileText, Download, BarChart2 } from "lucide-react"
-import { motion } from "framer-motion"
+import { useState, useEffect } from "react";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, FileText, Download, BarChart2 } from "lucide-react";
+import { motion } from "framer-motion";
+import { useAppSelector } from "@/lib/store/hook";
+import { useRouter } from "next/navigation";
+import { PredictionLoading } from "@/components/predictionLoading";
 
 export default function ResultsPage() {
-  const [riskScore] = useState(0.78)
-
+  const [riskScore] = useState(0.78);
+  const router = useRouter();
+  const result = useAppSelector((state) => state.prediction.result);
   // Risk level based on score
   const getRiskLevel = (score: number) => {
-    if (score >= 0.75) return { level: "High", color: "text-red-600 dark:text-red-400" }
-    if (score >= 0.5) return { level: "Moderate", color: "text-amber-600 dark:text-amber-400" }
-    return { level: "Low", color: "text-green-600 dark:text-green-400" }
-  }
+    if (score >= 0.75)
+      return { level: "High", color: "text-red-600 dark:text-red-400" };
+    if (score >= 0.5)
+      return { level: "Moderate", color: "text-amber-600 dark:text-amber-400" };
+    return { level: "Low", color: "text-green-600 dark:text-green-400" };
+  };
 
-  const riskInfo = getRiskLevel(riskScore)
+  const riskInfo = getRiskLevel(riskScore);
 
   return (
     <main className="container mx-auto px-4 py-12">
@@ -63,7 +69,13 @@ export default function ResultsPage() {
                         cy="50"
                         r="45"
                         fill="none"
-                        stroke={riskScore >= 0.75 ? "#ef4444" : riskScore >= 0.5 ? "#f59e0b" : "#10b981"}
+                        stroke={
+                          riskScore >= 0.75
+                            ? "#ef4444"
+                            : riskScore >= 0.5
+                            ? "#f59e0b"
+                            : "#10b981"
+                        }
                         strokeWidth="10"
                         strokeLinecap="round"
                         strokeDasharray="283"
@@ -92,8 +104,12 @@ export default function ResultsPage() {
                   </div>
 
                   <div className="text-center">
-                    <h3 className={`text-2xl font-bold mb-1 ${riskInfo.color}`}>{riskInfo.level} Risk</h3>
-                    <p className="text-muted-foreground dark:text-gray-400">Sepsis probability score</p>
+                    <h3 className={`text-2xl font-bold mb-1 ${riskInfo.color}`}>
+                      {riskInfo.level} Risk
+                    </h3>
+                    <p className="text-muted-foreground dark:text-gray-400">
+                      Sepsis probability score
+                    </p>
                   </div>
                 </div>
               </div>
@@ -110,11 +126,17 @@ export default function ResultsPage() {
               <Tabs defaultValue="report" className="h-full flex flex-col">
                 <div className="px-6 pt-6">
                   <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="report" className="flex items-center gap-2">
+                    <TabsTrigger
+                      value="report"
+                      className="flex items-center gap-2"
+                    >
                       <FileText className="h-4 w-4" />
                       AI Report
                     </TabsTrigger>
-                    <TabsTrigger value="explanation" className="flex items-center gap-2">
+                    <TabsTrigger
+                      value="explanation"
+                      className="flex items-center gap-2"
+                    >
                       <BarChart2 className="h-4 w-4" />
                       Model Explanation
                     </TabsTrigger>
@@ -124,16 +146,21 @@ export default function ResultsPage() {
                 <TabsContent value="report" className="flex-1 flex flex-col">
                   <div className="p-6 flex-1">
                     <div className="p-4 rounded-lg bg-red-50 border border-red-200 mb-6 dark:bg-red-900/20 dark:border-red-900/30">
-                      <h3 className="font-semibold text-red-700 dark:text-red-400 mb-1">Clinical Assessment</h3>
+                      <h3 className="font-semibold text-red-700 dark:text-red-400 mb-1">
+                        Clinical Assessment
+                      </h3>
                       <p className="text-sm text-gray-700 dark:text-gray-300">
-                        The patient shows signs of early-stage sepsis, with elevated respiratory rate and low MAP over 4
-                        hours. Immediate intervention is recommended.
+                        The patient shows signs of early-stage sepsis, with
+                        elevated respiratory rate and low MAP over 4 hours.
+                        Immediate intervention is recommended.
                       </p>
                     </div>
 
                     <div className="space-y-6">
                       <div>
-                        <h3 className="text-lg font-semibold mb-2">Suggested Actions</h3>
+                        <h3 className="text-lg font-semibold mb-2">
+                          Suggested Actions
+                        </h3>
                         <ul className="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
                           <li>Fluid resuscitation</li>
                           <li>Monitor WBC trend</li>
@@ -143,11 +170,16 @@ export default function ResultsPage() {
                       </div>
 
                       <div>
-                        <h3 className="text-lg font-semibold mb-2">Possible Medications</h3>
+                        <h3 className="text-lg font-semibold mb-2">
+                          Possible Medications
+                        </h3>
                         <ul className="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
                           <li>Piperacillin-tazobactam</li>
                           <li>Vancomycin (if MRSA risk)</li>
-                          <li>Consider vasopressors if MAP remains low after fluid resuscitation</li>
+                          <li>
+                            Consider vasopressors if MAP remains low after fluid
+                            resuscitation
+                          </li>
                         </ul>
                       </div>
                     </div>
@@ -165,21 +197,49 @@ export default function ResultsPage() {
 
                 <TabsContent value="explanation" className="flex-1">
                   <div className="p-6">
-                    <h3 className="text-lg font-semibold mb-4">Feature Importance</h3>
+                    <h3 className="text-lg font-semibold mb-4">
+                      Feature Importance
+                    </h3>
 
                     <div className="space-y-4">
                       {[
-                        { name: "Respiratory Rate", value: 0.85, color: "bg-red-500 dark:bg-red-600" },
-                        { name: "Mean Arterial Pressure", value: 0.72, color: "bg-orange-500 dark:bg-orange-600" },
-                        { name: "Heart Rate", value: 0.65, color: "bg-amber-500 dark:bg-amber-600" },
-                        { name: "Temperature", value: 0.58, color: "bg-yellow-500 dark:bg-yellow-600" },
-                        { name: "O2 Saturation", value: 0.45, color: "bg-teal-500 dark:bg-teal-600" },
-                        { name: "WBC Count", value: 0.38, color: "bg-green-500 dark:bg-green-600" },
+                        {
+                          name: "Respiratory Rate",
+                          value: 0.85,
+                          color: "bg-red-500 dark:bg-red-600",
+                        },
+                        {
+                          name: "Mean Arterial Pressure",
+                          value: 0.72,
+                          color: "bg-orange-500 dark:bg-orange-600",
+                        },
+                        {
+                          name: "Heart Rate",
+                          value: 0.65,
+                          color: "bg-amber-500 dark:bg-amber-600",
+                        },
+                        {
+                          name: "Temperature",
+                          value: 0.58,
+                          color: "bg-yellow-500 dark:bg-yellow-600",
+                        },
+                        {
+                          name: "O2 Saturation",
+                          value: 0.45,
+                          color: "bg-teal-500 dark:bg-teal-600",
+                        },
+                        {
+                          name: "WBC Count",
+                          value: 0.38,
+                          color: "bg-green-500 dark:bg-green-600",
+                        },
                       ].map((feature, index) => (
                         <div key={index} className="space-y-1">
                           <div className="flex justify-between text-sm">
                             <span>{feature.name}</span>
-                            <span className="font-medium">{Math.round(feature.value * 100)}%</span>
+                            <span className="font-medium">
+                              {Math.round(feature.value * 100)}%
+                            </span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
                             <motion.div
@@ -195,11 +255,15 @@ export default function ResultsPage() {
                     </div>
 
                     <div className="mt-8">
-                      <h3 className="text-lg font-semibold mb-2">Interpretation</h3>
+                      <h3 className="text-lg font-semibold mb-2">
+                        Interpretation
+                      </h3>
                       <p className="text-gray-700 dark:text-gray-300">
-                        The model identified elevated respiratory rate and decreased mean arterial pressure as the
-                        strongest indicators of sepsis risk. These vital signs showed significant deviation from normal
-                        ranges over the past 4 hours.
+                        The model identified elevated respiratory rate and
+                        decreased mean arterial pressure as the strongest
+                        indicators of sepsis risk. These vital signs showed
+                        significant deviation from normal ranges over the past 4
+                        hours.
                       </p>
                     </div>
                   </div>
@@ -210,5 +274,5 @@ export default function ResultsPage() {
         </div>
       </div>
     </main>
-  )
+  );
 }

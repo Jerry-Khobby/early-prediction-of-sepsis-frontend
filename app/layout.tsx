@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Toaster } from "@/components/toaster";
+import { Providers } from "./providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -31,7 +32,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Navbar />
-          <div className="flex-1">{children}</div>
+          <div className="flex-1">
+            <Providers>{children}</Providers>
+            </div>
           {/*  <Footer /> */}
           <Toaster />
         </ThemeProvider>
