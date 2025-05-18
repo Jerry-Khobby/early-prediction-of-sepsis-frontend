@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-interface PredictionResult {
+interface CsvPredictionResult {
   auc: number;
   threshold: number;
   metrics: {
@@ -18,24 +18,61 @@ interface PredictionResult {
   };
 }
 
+interface ManualPredictionResult {
+  risk_assessment: {
+    score: number;
+    level: string;
+    time_frame: string;
+    interpretation: string;
+  };
+  key_risk_factors: Array<{
+    feature: string;
+    value: number;
+  }>;
+  clinical_guidance: {
+    monitoring: string[];
+    diagnostic_tests: string[];
+    treatment_options: {
+      immediate_medications: string[];
+      antibiotic_choices: Record<string, string[]>;
+    };
+    required_actions: string[];
+  };
+  safety_alerts: string[];
+  disclaimers: string[];
+}
+
 interface PredictionState {
-  result: PredictionResult | null;
+  csvResult: CsvPredictionResult | null;
+  manualResult: ManualPredictionResult | null;
   loading: boolean;
   error: string | null;
+  predictionType: 'csv' | 'manual' | null;
 }
 
 const initialState: PredictionState = {
-  result: null,
+  csvResult: null,
+  manualResult: null,
   loading: false,
   error: null,
+  predictionType: null,
 };
 
 const predictionSlice = createSlice({
   name: "prediction",
   initialState,
   reducers: {
-    setPredictionResult(state, action: PayloadAction<PredictionResult>) {
-      state.result = action.payload;
+    setCsvPredictionResult(state, action: PayloadAction<CsvPredictionResult>) {
+      state.csvResult = action.payload;
+      state.manualResult = null;
+      state.predictionType = 'csv';
+      state.loading = false;
+      state.error = null;
+    },
+    setManualPredictionResult(state, action: PayloadAction<ManualPredictionResult>) {
+      state.manualResult = action.payload;
+      state.csvResult = null;
+      state.predictionType = 'manual';
       state.loading = false;
       state.error = null;
     },
@@ -48,14 +85,17 @@ const predictionSlice = createSlice({
       state.loading = false;
     },
     clearPredictionResult(state) {
-      state.result = null;
+      state.csvResult = null;
+      state.manualResult = null;
+      state.predictionType = null;
       state.error = null;
     },
   },
 });
 
 export const {
-  setPredictionResult,
+  setCsvPredictionResult,
+  setManualPredictionResult,
   setPredictionLoading,
   setPredictionError,
   clearPredictionResult,

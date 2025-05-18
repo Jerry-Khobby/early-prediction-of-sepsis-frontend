@@ -15,7 +15,7 @@ import { ReloadIcon } from "@radix-ui/react-icons";
 import { useRouter } from "next/navigation";
 import { useAppDispatch } from "@/lib/store/hook";
 import {
-  setPredictionResult,
+  setCsvPredictionResult,
   setPredictionLoading,
   setPredictionError,
 } from "@/lib/store/prediction";
@@ -106,14 +106,13 @@ const UploadCsv = () => {
       }
 
       const result = await response.json();
-      dispatch(setPredictionResult(result));
+      dispatch(setCsvPredictionResult(result));
 
       toast({
         title: "Prediction Successful",
         description: "The prediction has been completed successfully.",
         variant: "default",
       });
-
       setTimeout(() => {
         router.push("/results");
       }, 1500);

@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,56 +11,28 @@ import { Upload, FileUp, Table, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { Progress } from "@/components/ui/progress";
+import { FormData } from "@/lib/form-type";
+import { transformFormData } from "@/lib/utils";
+import { ReloadIcon } from "@radix-ui/react-icons";
+import {
+  setManualPredictionResult,
+  setPredictionError,
+} from "@/lib/store/prediction";
+import { useToast } from "./ui/use-toast";
+import { BASE_API_URL } from "@/lib/constant";
+import { useAppDispatch } from "@/lib/store/hook";
+import { useRouter } from "next/navigation";
 
-interface FormData {
-  // High correlation arrays
-  HR: string[];
-  MAP: string[];
-  O2Sat: string[];
-  SBP: string[];
-  Resp: string[];
-  // Demographics
-  Unit1: string;
-  Gender: string;
-  HospAdmTime: string;
-  Age: string;
-  // Vital signs
-  DBP: string;
-  Temp: string;
-  // Blood chemistry
-  Glucose: string;
-  Potassium: string;
-  Hct: string;
-  FiO2: string;
-  Hgb: string;
-  pH: string;
-  BUN: string;
-  WBC: string;
-  Magnesium: string;
-  Creatinine: string;
-  Platelets: string;
-  Calcium: string;
-  PaCO2: string;
-  BaseExcess: string;
-  Chloride: string;
-  HCO3: string;
-  Phosphate: string;
-  EtCO2: string;
-  SaO2: string;
-  PTT: string;
-  Lactate: string;
-  AST: string;
-  Alkalinephos: string;
-  Bilirubin_total: string;
-  TroponinI: string;
-  Fibrinogen: string;
-  Bilirubin_direct: string;
-}
 const UploadManual = () => {
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
   const [completionPercentage, setCompletionPercentage] = useState(0);
   const {
     register,
     watch,
+    handleSubmit,
     formState: { isValid },
   } = useForm<FormData>({
     mode: "onChange",
@@ -170,6 +141,48 @@ const UploadManual = () => {
       </div>
     );
   };
+
+  const onSubmit = async (data: FormData) => {
+    setIsLoading(true);
+    try {
+      const payload = transformFormData(data);
+      const response = await fetch(`${BASE_API_URL}/api/v1/manual_predict`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          accept: "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to run prediction");
+      }
+      const result = await response.json();
+      dispatch(setManualPredictionResult(result));
+      toast({
+        title: "Prediction Successful",
+        description: "The prediction has been successfully completed.",
+        variant: "default",
+      });
+      setTimeout(() => {
+        router.push("/results");
+      }, 1500);
+    } catch (error) {
+      console.error("Prediction error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occured";
+      dispatch(setPredictionError(errorMessage));
+      toast({
+        title: "Prediction Failed",
+        description:
+          error instanceof Error ? error.message : "An unknown error occured",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
   return (
     <TabsContent value="manual">
       <Card>
@@ -184,7 +197,7 @@ const UploadManual = () => {
             </div>
           </div>
 
-          <form className="space-y-8">
+          <form className="space-y-8" onSubmit={handleSubmit(onSubmit)}>
             {/* High Correlation Section */}
             <div className="space-y-6">
               <h4 className="text-md font-medium text-gray-700 dark:text-gray-300">
@@ -564,11 +577,18 @@ const UploadManual = () => {
           </div>
           <Button
             className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600"
-            disabled={!isFormValid()}
+            disabled={!isFormValid() || isLoading}
           >
-            <span className="flex items-center gap-2">
-              Run Prediction <ArrowRight className="h-4 w-4" />
-            </span>
+            {isLoading ? (
+              <>
+                <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                Run Prediction <ArrowRight className="h-4 w-4 ml-2" />
+              </>
+            )}
           </Button>
         </div>
       </Card>

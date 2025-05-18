@@ -13,7 +13,7 @@ import { PredictionLoading } from "@/components/predictionLoading";
 export default function ResultsPage() {
   const [riskScore] = useState(0.78);
   const router = useRouter();
-  const result = useAppSelector((state) => state.prediction.result);
+  const result = useAppSelector((state) => state.prediction);
   // Risk level based on score
   const getRiskLevel = (score: number) => {
     if (score >= 0.75)
