@@ -7,9 +7,10 @@ import { AlertCircle, FileText, BarChart2, Download } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { PredictionLoading } from "./predictionLoading";
+import { useAppSelector } from "@/lib/store/hook";
 
 export function ManualResult() {
-  const [riskScore, setRiskScore] = useState(0.78); // Example risk score
+  const riskScore = 0.89;
   const router = useRouter();
   const getRiskLevel = (score: number) => {
     if (score >= 0.75)
