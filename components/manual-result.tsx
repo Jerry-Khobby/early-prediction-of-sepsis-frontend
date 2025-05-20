@@ -307,7 +307,7 @@ export function ManualResult() {
                 <div className="space-y-4">
                   {manualResult?.key_risk_factors.map((riskFactor, index) => {
                     // Normalize the value to be between 0 and 1 (assuming they're percentages)
-                    const normalizedValue = Math.abs(riskFactor.value) / 100;
+                    const normalizedValue = Math.abs(riskFactor.value) * 100;
 
                     // Assign colors based on importance level
                     let colorClass = "bg-green-500 dark:bg-green-600"; // default for lower importance
