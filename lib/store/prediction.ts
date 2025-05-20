@@ -38,7 +38,7 @@ interface ManualPredictionResult {
       antibiotic_choices: {
         community_acquired:string[];
         hospital_acquired:string[];
-        pencillin_allergy:string[];
+        penicillin_allergy:string[];
       };
     };
     required_actions: string[];

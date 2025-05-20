@@ -8,10 +8,35 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { PredictionLoading } from "./predictionLoading";
 import { useAppSelector } from "@/lib/store/hook";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 export function ManualResult() {
-  const riskScore = 0.89;
+  const { manualResult, predictionType } = useAppSelector(
+    (state) => state.prediction
+  );
   const router = useRouter();
+
+  if (!manualResult && predictionType !== "manual") {
+    return (
+      <main className="container mx-auto px-4 py-12 flex flex-col items-center justify-center min-h-screen text-center">
+        <InlineAlert
+          title="No Results Found"
+          description="It looks like you haven't uploaded any data or run a prediction yet."
+        />
+        <p className="mt-4 text-muted-foreground dark:text-gray-400 max-w-md">
+          Please upload a file or enter patient details manually to get a
+          prediction.
+        </p>
+        <button
+          onClick={() => router.push("/upload")}
+          className="mt-6 text-[#44bfb2] text-sm font-medium hover:underline transition"
+        >
+          Go to Upload Page
+        </button>
+      </main>
+    );
+  }
+  const riskScore = manualResult?.risk_assessment?.score ?? 0;
   const getRiskLevel = (score: number) => {
     if (score >= 0.75)
       return { level: "High", color: "text-red-600 dark:text-red-400" };
@@ -95,7 +120,7 @@ export function ManualResult() {
 
               <div className="text-center">
                 <h3 className={`text-2xl font-bold mb-1 ${riskInfo.color}`}>
-                  {riskInfo.level} Risk
+                  {manualResult?.risk_assessment?.level} Risk
                 </h3>
                 <p className="text-muted-foreground dark:text-gray-400">
                   Sepsis probability score
@@ -137,38 +162,130 @@ export function ManualResult() {
                     Clinical Assessment
                   </h3>
                   <p className="text-sm text-gray-700 dark:text-gray-300">
-                    The patient shows signs of early-stage sepsis, with elevated
-                    respiratory rate and low MAP over 4 hours. Immediate
-                    intervention is recommended.
+                    {manualResult?.risk_assessment?.interpretation && (
+                      <>
+                        <strong>
+                          {manualResult.risk_assessment.interpretation}.
+                        </strong>{" "}
+                      </>
+                    )}
+                    {manualResult?.risk_assessment?.detailed_analysis && (
+                      <>{manualResult.risk_assessment.detailed_analysis} </>
+                    )}
+                    {manualResult?.risk_assessment?.time_frame && (
+                      <>
+                        (Time frame: {manualResult.risk_assessment.time_frame})
+                      </>
+                    )}
                   </p>
                 </div>
-
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-lg font-semibold mb-2">
-                      Suggested Actions
+                      Clinical Guidance
                     </h3>
-                    <ul className="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
-                      <li>Fluid resuscitation</li>
-                      <li>Monitor WBC trend</li>
-                      <li>Blood cultures</li>
-                      <li>Hourly vital sign monitoring</li>
+                    <h3 className="text-lg font-semibold mb-2">Monitoring</h3>
+                    <ul className="list-disc pl-6 space-y-1 text-gray-700 dark:text-gray-300">
+                      {manualResult?.clinical_guidance?.monitoring?.map(
+                        (item, i) => (
+                          <li key={i}>{item}</li>
+                        )
+                      )}
+                    </ul>
+                    <h3 className="text-lg font-semibold mb-2">
+                      Diagnostic Tests
+                    </h3>
+                    <ul className="list-disc pl-6 space-y-1 text-gray-700 dark:text-gray-300">
+                      {manualResult?.clinical_guidance?.diagnostic_tests?.map(
+                        (test, i) => (
+                          <li key={i}>{test}</li>
+                        )
+                      )}
                     </ul>
                   </div>
-
+                </div>
+                <div className="space-y-6">
                   <div>
                     <h3 className="text-lg font-semibold mb-2">
-                      Possible Medications
+                      Treatment Options
                     </h3>
-                    <ul className="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
-                      <li>Piperacillin-tazobactam</li>
-                      <li>Vancomycin (if MRSA risk)</li>
-                      <li>
-                        Consider vasopressors if MAP remains low after fluid
-                        resuscitation
-                      </li>
+                    <h3 className="text-lg font-semibold mb-2">
+                      Immediate Medications
+                    </h3>
+                    <ul className="list-disc pl-6 space-y-1 text-gray-700 dark:text-gray-300">
+                      {manualResult?.clinical_guidance?.treatment_options?.immediate_medications?.map(
+                        (med, i) => (
+                          <li
+                            key={i}
+                            className={
+                              med.startsWith("-") ? "ml-4 list-disc" : ""
+                            }
+                          >
+                            {med}
+                          </li>
+                        )
+                      )}
+                    </ul>
+
+                    <h3 className="text-lg font-semibold mb-2">
+                      Antibiotic Choices
+                    </h3>
+
+                    <h4 className="font-semibold mt-2">Community Acquired</h4>
+                    <ul className="list-disc pl-10 space-y-1 text-gray-700 dark:text-gray-300">
+                      {manualResult?.clinical_guidance?.treatment_options?.antibiotic_choices?.community_acquired?.map(
+                        (abx, i) => (
+                          <li key={i}>{abx}</li>
+                        )
+                      )}
+                    </ul>
+
+                    <h4 className="font-semibold mt-2">Hospital Acquired</h4>
+                    <ul className="list-disc pl-10 space-y-1 text-gray-700 dark:text-gray-300">
+                      {manualResult?.clinical_guidance?.treatment_options?.antibiotic_choices?.hospital_acquired?.map(
+                        (abx, i) => (
+                          <li key={i}>{abx}</li>
+                        )
+                      )}
+                    </ul>
+
+                    <h4 className="font-semibold mt-2">Penicillin Allergy</h4>
+                    <ul className="list-disc pl-10 space-y-1 text-gray-700 dark:text-gray-300">
+                      {manualResult?.clinical_guidance?.treatment_options?.antibiotic_choices?.penicillin_allergy?.map(
+                        (abx, i) => (
+                          <li key={i}>{abx}</li>
+                        )
+                      )}
                     </ul>
                   </div>
+                </div>
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold mb-2">
+                    Required Actions
+                  </h3>
+                  <ul className="list-disc pl-6 space-y-1 text-gray-700 dark:text-gray-300">
+                    {manualResult?.clinical_guidance?.required_actions?.map(
+                      (action, i) => (
+                        <li key={i}>{action}</li>
+                      )
+                    )}
+                  </ul>
+                </div>
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold mb-2">Safety Alerts</h3>
+                  <ul className="list-disc pl-6 space-y-1 text-gray-700 dark:text-gray-300">
+                    {manualResult?.safety_alerts?.map((alert, i) => (
+                      <li key={i}>{alert}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold mb-2">Disclaimer</h3>
+                  <ul className="list-disc pl-6 space-y-1 text-gray-700 dark:text-gray-300">
+                    {manualResult?.disclaimers?.map((alert, i) => (
+                      <li key={i}>{alert}</li>
+                    ))}
+                  </ul>
                 </div>
               </div>
 
@@ -181,7 +298,6 @@ export function ManualResult() {
                 </Button>
               </div>
             </TabsContent>
-
             <TabsContent value="explanation" className="flex-1">
               <div className="p-6">
                 <h3 className="text-lg font-semibold mb-4">
@@ -189,65 +305,46 @@ export function ManualResult() {
                 </h3>
 
                 <div className="space-y-4">
-                  {[
-                    {
-                      name: "Respiratory Rate",
-                      value: 0.85,
-                      color: "bg-red-500 dark:bg-red-600",
-                    },
-                    {
-                      name: "Mean Arterial Pressure",
-                      value: 0.72,
-                      color: "bg-orange-500 dark:bg-orange-600",
-                    },
-                    {
-                      name: "Heart Rate",
-                      value: 0.65,
-                      color: "bg-amber-500 dark:bg-amber-600",
-                    },
-                    {
-                      name: "Temperature",
-                      value: 0.58,
-                      color: "bg-yellow-500 dark:bg-yellow-600",
-                    },
-                    {
-                      name: "O2 Saturation",
-                      value: 0.45,
-                      color: "bg-teal-500 dark:bg-teal-600",
-                    },
-                    {
-                      name: "WBC Count",
-                      value: 0.38,
-                      color: "bg-green-500 dark:bg-green-600",
-                    },
-                  ].map((feature, index) => (
-                    <div key={index} className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span>{feature.name}</span>
-                        <span className="font-medium">
-                          {Math.round(feature.value * 100)}%
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                        <motion.div
-                          className={`h-2.5 rounded-full ${feature.color}`}
-                          style={{ width: `${feature.value * 100}%` }}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${feature.value * 100}%` }}
-                          transition={{ duration: 1, delay: index * 0.1 }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                  {manualResult?.key_risk_factors.map((riskFactor, index) => {
+                    // Normalize the value to be between 0 and 1 (assuming they're percentages)
+                    const normalizedValue = Math.abs(riskFactor.value) / 100;
 
+                    // Assign colors based on importance level
+                    let colorClass = "bg-green-500 dark:bg-green-600"; // default for lower importance
+                    if (normalizedValue > 0.3)
+                      colorClass = "bg-red-500 dark:bg-red-600";
+                    else if (normalizedValue > 0.2)
+                      colorClass = "bg-orange-500 dark:bg-orange-600";
+                    else if (normalizedValue > 0.15)
+                      colorClass = "bg-amber-500 dark:bg-amber-600";
+                    else if (normalizedValue > 0.1)
+                      colorClass = "bg-yellow-500 dark:bg-yellow-600";
+
+                    return (
+                      <div key={index} className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span>{riskFactor.feature}</span>
+                          <span className="font-medium">
+                            {Math.abs(riskFactor.value).toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                          <motion.div
+                            className={`h-2.5 rounded-full ${colorClass}`}
+                            style={{ width: `${normalizedValue * 100}%` }}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${normalizedValue * 100}%` }}
+                            transition={{ duration: 1, delay: index * 0.1 }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
                 <div className="mt-8">
                   <h3 className="text-lg font-semibold mb-2">Interpretation</h3>
                   <p className="text-gray-700 dark:text-gray-300">
-                    The model identified elevated respiratory rate and decreased
-                    mean arterial pressure as the strongest indicators of sepsis
-                    risk. These vital signs showed significant deviation from
-                    normal ranges over the past 4 hours.
+                    {manualResult?.risk_assessment.detailed_analysis}
                   </p>
                 </div>
               </div>
