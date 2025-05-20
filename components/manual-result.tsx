@@ -305,42 +305,49 @@ export function ManualResult() {
                 </h3>
 
                 <div className="space-y-4">
-                  {manualResult?.key_risk_factors.map((riskFactor, index) => {
-                    // Normalize the value to be between 0 and 1 (assuming they're percentages)
-                    const normalizedValue = Math.abs(riskFactor.value) * 100;
+                  {manualResult?.key_risk_factors
+                    .sort((a, b) => Math.abs(b.value) - Math.abs(a.value)) // Sort by importance
+                    .slice(0, 10) // Take top 10 features
+                    .map((riskFactor, index) => {
+                      const percentage = Math.abs(riskFactor.value) * 100;
 
-                    // Assign colors based on importance level
-                    let colorClass = "bg-green-500 dark:bg-green-600"; // default for lower importance
-                    if (normalizedValue > 0.3)
-                      colorClass = "bg-red-500 dark:bg-red-600";
-                    else if (normalizedValue > 0.2)
-                      colorClass = "bg-orange-500 dark:bg-orange-600";
-                    else if (normalizedValue > 0.15)
-                      colorClass = "bg-amber-500 dark:bg-amber-600";
-                    else if (normalizedValue > 0.1)
-                      colorClass = "bg-yellow-500 dark:bg-yellow-600";
+                      // Assign 10 distinct colors based on sorted index
+                      const colorClasses = [
+                        "bg-red-700 dark:bg-red-800", // 1st - Most important
+                        "bg-orange-600 dark:bg-orange-700", // 2nd
+                        "bg-amber-500 dark:bg-amber-600", // 3rd
+                        "bg-yellow-500 dark:bg-yellow-600", // 4th
+                        "bg-lime-500 dark:bg-lime-600", // 5th
+                        "bg-emerald-500 dark:bg-emerald-600", // 6th
+                        "bg-teal-500 dark:bg-teal-600", // 7th
+                        "bg-cyan-500 dark:bg-cyan-600", // 8th
+                        "bg-blue-500 dark:bg-blue-600", // 9th
+                        "bg-indigo-400 dark:bg-indigo-500", // 10th
+                      ];
+                      const colorClass = colorClasses[index] || "bg-gray-400"; // Fallback
 
-                    return (
-                      <div key={index} className="space-y-1">
-                        <div className="flex justify-between text-sm">
-                          <span>{riskFactor.feature}</span>
-                          <span className="font-medium">
-                            {Math.abs(riskFactor.value).toFixed(1)}%
-                          </span>
+                      return (
+                        <div key={index} className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span>{riskFactor.feature}</span>
+                            <span className="font-medium">
+                              {percentage.toFixed(1)}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                            <motion.div
+                              className={`h-2.5 rounded-full ${colorClass}`}
+                              style={{ width: `${percentage}%` }}
+                              initial={{ width: 0 }}
+                              animate={{ width: `${percentage}%` }}
+                              transition={{ duration: 1, delay: index * 0.1 }}
+                            />
+                          </div>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                          <motion.div
-                            className={`h-2.5 rounded-full ${colorClass}`}
-                            style={{ width: `${normalizedValue * 100}%` }}
-                            initial={{ width: 0 }}
-                            animate={{ width: `${normalizedValue * 100}%` }}
-                            transition={{ duration: 1, delay: index * 0.1 }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                 </div>
+
                 <div className="mt-8">
                   <h3 className="text-lg font-semibold mb-2">Interpretation</h3>
                   <p className="text-gray-700 dark:text-gray-300">
