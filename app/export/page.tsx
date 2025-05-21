@@ -166,7 +166,7 @@ export default function ExportPage() {
       <div className="max-w-6xl mx-auto">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold mb-2">Export Report</h1>
-          <p className="text-muted-foreground dark:text-gray-400">
+          <p className="text-muted-foreground dark:text-gray-400 text-md">
             Preview, customize, and download the sepsis prediction report
           </p>
         </div>
