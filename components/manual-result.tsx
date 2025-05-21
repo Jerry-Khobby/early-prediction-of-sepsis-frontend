@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { PredictionLoading } from "./predictionLoading";
 import { useAppSelector } from "@/lib/store/hook";
 import { InlineAlert } from "@/components/ui/inline-alert";
+import Link from "next/link";
 
 export function ManualResult() {
   const { manualResult, predictionType } = useAppSelector(
@@ -184,21 +185,25 @@ export function ManualResult() {
                     <h3 className="text-lg font-semibold mb-2">
                       Clinical Guidance
                     </h3>
-                    <h3 className="text-lg font-semibold mb-2">Monitoring</h3>
+                    <h3 className="text-md font-semibold mb-2">Monitoring</h3>
                     <ul className="list-disc pl-6 space-y-1 text-gray-700 dark:text-gray-300">
                       {manualResult?.clinical_guidance?.monitoring?.map(
                         (item, i) => (
-                          <li key={i}>{item}</li>
+                          <li key={i} className="text-xs">
+                            {item}
+                          </li>
                         )
                       )}
                     </ul>
-                    <h3 className="text-lg font-semibold mb-2">
+                    <h3 className="text-md font-semibold mb-2">
                       Diagnostic Tests
                     </h3>
                     <ul className="list-disc pl-6 space-y-1 text-gray-700 dark:text-gray-300">
                       {manualResult?.clinical_guidance?.diagnostic_tests?.map(
                         (test, i) => (
-                          <li key={i}>{test}</li>
+                          <li key={i} className="text-xs">
+                            {test}
+                          </li>
                         )
                       )}
                     </ul>
@@ -206,19 +211,21 @@ export function ManualResult() {
                 </div>
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-lg font-semibold mb-2">
+                    <h3 className="text-lg  font-semibold mb-2 mt-5">
                       Treatment Options
                     </h3>
-                    <h3 className="text-lg font-semibold mb-2">
+                    <h3 className="text-sm font-semibold mb-2">
                       Immediate Medications
                     </h3>
-                    <ul className="list-disc pl-6 space-y-1 text-gray-700 dark:text-gray-300">
+                    <ul className="list-disc pl-6 space-y-1 text-gray-700 dark:text-gray-300 text-xs">
                       {manualResult?.clinical_guidance?.treatment_options?.immediate_medications?.map(
                         (med, i) => (
                           <li
                             key={i}
                             className={
-                              med.startsWith("-") ? "ml-4 list-disc" : ""
+                              med.startsWith("-")
+                                ? "ml-4 list-disc text-xs"
+                                : ""
                             }
                           >
                             {med}
@@ -227,12 +234,14 @@ export function ManualResult() {
                       )}
                     </ul>
 
-                    <h3 className="text-lg font-semibold mb-2">
+                    <h3 className="text-md mt-4 font-semibold mb-2">
                       Antibiotic Choices
                     </h3>
 
-                    <h4 className="font-semibold mt-2">Community Acquired</h4>
-                    <ul className="list-disc pl-10 space-y-1 text-gray-700 dark:text-gray-300">
+                    <h5 className="font-semibold text-sm mt-2">
+                      Community Acquired
+                    </h5>
+                    <ul className="list-disc pl-10 space-y-1 text-gray-700 dark:text-gray-300 text-xs">
                       {manualResult?.clinical_guidance?.treatment_options?.antibiotic_choices?.community_acquired?.map(
                         (abx, i) => (
                           <li key={i}>{abx}</li>
@@ -240,8 +249,10 @@ export function ManualResult() {
                       )}
                     </ul>
 
-                    <h4 className="font-semibold mt-2">Hospital Acquired</h4>
-                    <ul className="list-disc pl-10 space-y-1 text-gray-700 dark:text-gray-300">
+                    <h5 className="font-semibold mt-2 text-sm">
+                      Hospital Acquired
+                    </h5>
+                    <ul className="list-disc pl-10 space-y-1 text-gray-700 dark:text-gray-300 text-xs">
                       {manualResult?.clinical_guidance?.treatment_options?.antibiotic_choices?.hospital_acquired?.map(
                         (abx, i) => (
                           <li key={i}>{abx}</li>
@@ -249,8 +260,10 @@ export function ManualResult() {
                       )}
                     </ul>
 
-                    <h4 className="font-semibold mt-2">Penicillin Allergy</h4>
-                    <ul className="list-disc pl-10 space-y-1 text-gray-700 dark:text-gray-300">
+                    <h4 className="font-semibold mt-2 text-sm">
+                      Penicillin Allergy
+                    </h4>
+                    <ul className="list-disc pl-10 space-y-1 text-gray-700 dark:text-gray-300 text-xs">
                       {manualResult?.clinical_guidance?.treatment_options?.antibiotic_choices?.penicillin_allergy?.map(
                         (abx, i) => (
                           <li key={i}>{abx}</li>
@@ -260,10 +273,10 @@ export function ManualResult() {
                   </div>
                 </div>
                 <div className="space-y-6">
-                  <h3 className="text-lg font-semibold mb-2">
+                  <h3 className="text-md font-semibold  mt-4">
                     Required Actions
                   </h3>
-                  <ul className="list-disc pl-6 space-y-1 text-gray-700 dark:text-gray-300">
+                  <ul className="list-disc pl-6 space-y-1 text-gray-700 dark:text-gray-300 text-xs">
                     {manualResult?.clinical_guidance?.required_actions?.map(
                       (action, i) => (
                         <li key={i}>{action}</li>
@@ -272,16 +285,20 @@ export function ManualResult() {
                   </ul>
                 </div>
                 <div className="space-y-6">
-                  <h3 className="text-lg font-semibold mb-2">Safety Alerts</h3>
-                  <ul className="list-disc pl-6 space-y-1 text-gray-700 dark:text-gray-300">
+                  <h3 className="text-md font-semibold mb-2 mt-4">
+                    Safety Alerts
+                  </h3>
+                  <ul className="list-disc pl-6 space-y-1 text-gray-700 dark:text-gray-300 text-xs">
                     {manualResult?.safety_alerts?.map((alert, i) => (
                       <li key={i}>{alert}</li>
                     ))}
                   </ul>
                 </div>
                 <div className="space-y-6">
-                  <h3 className="text-lg font-semibold mb-2">Disclaimer</h3>
-                  <ul className="list-disc pl-6 space-y-1 text-gray-700 dark:text-gray-300">
+                  <h3 className="text-md mt-4 font-semibold mb-2">
+                    Disclaimer
+                  </h3>
+                  <ul className="list-disc pl-6 space-y-1 text-gray-700 dark:text-gray-300 text-xs">
                     {manualResult?.disclaimers?.map((alert, i) => (
                       <li key={i}>{alert}</li>
                     ))}
@@ -290,11 +307,13 @@ export function ManualResult() {
               </div>
 
               <div className="p-4 border-t flex justify-end gap-4 mt-auto">
-                <Button variant="outline">Regenerate Report</Button>
+                <Link href="/upload">
+                  <Button variant="outline">Regenerate Report</Button>
+                </Link>
                 <Button className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600">
-                  <span className="flex items-center gap-2">
+                  <Link href="/export" className="flex items-center gap-2">
                     <Download className="h-4 w-4" /> Export Report
-                  </span>
+                  </Link>
                 </Button>
               </div>
             </TabsContent>
@@ -305,11 +324,11 @@ export function ManualResult() {
                 </h3>
 
                 <div className="space-y-4">
-                  {manualResult?.key_risk_factors
+                  {[...(manualResult?.key_risk_factors || [])]
                     .sort((a, b) => Math.abs(b.value) - Math.abs(a.value)) // Sort by importance
                     .slice(0, 10) // Take top 10 features
                     .map((riskFactor, index) => {
-                      const percentage = Math.abs(riskFactor.value) * 100;
+                      const percentage = Math.abs(riskFactor.value) * 10;
 
                       // Assign 10 distinct colors based on sorted index
                       const colorClasses = [
@@ -347,10 +366,9 @@ export function ManualResult() {
                       );
                     })}
                 </div>
-
                 <div className="mt-8">
                   <h3 className="text-lg font-semibold mb-2">Interpretation</h3>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-gray-700 dark:text-gray-300 text-xs">
                     {manualResult?.risk_assessment.detailed_analysis}
                   </p>
                 </div>

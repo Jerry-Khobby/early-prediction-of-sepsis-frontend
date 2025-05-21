@@ -7,6 +7,7 @@ import { AlertCircle, FileText, BarChart2, Download } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { PredictionLoading } from "./predictionLoading";
+import Link from "next/link";
 
 export function CsvResult() {
   const [riskScore, setRiskScore] = useState(0.78); // Example risk score
@@ -172,11 +173,14 @@ export function CsvResult() {
               </div>
 
               <div className="p-4 border-t flex justify-end gap-4 mt-auto">
-                <Button variant="outline">Regenerate Report</Button>
+                <Link href="/upload">
+                  <Button variant="outline">Regenerate Report</Button>
+                </Link>
+
                 <Button className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600">
-                  <span className="flex items-center gap-2">
+                  <Link className="flex items-center gap-2" href="/export">
                     <Download className="h-4 w-4" /> Export Report
-                  </span>
+                  </Link>
                 </Button>
               </div>
             </TabsContent>
