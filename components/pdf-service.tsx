@@ -128,16 +128,15 @@ function addHeader(doc: jsPDF): void {
 
 // Helper function to add patient information
 function addPatientInformation(doc: jsPDF, patientData: PDFOptions["patientData"], yPos: number): number {
-  if (!patientData) return yPos
+  if (!patientData) return yPos;
 
-  doc.setTextColor(0, 0, 0)
-  doc.setFontSize(14)
-  doc.setFont("helvetica", "bold")
-  doc.text("Patient Information", 15, yPos)
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text("Patient Information", 15, yPos);
 
-  yPos += 8
+  yPos += 8;
 
-  // Create a table for patient information
   autoTable(doc, {
     startY: yPos,
     head: [["Patient ID", "Name", "Age", "Gender", "Admission Date", "Department"]],
@@ -158,10 +157,14 @@ function addPatientInformation(doc: jsPDF, patientData: PDFOptions["patientData"
       fontStyle: "bold",
     },
     margin: { left: 15, right: 15 },
-  })
+  });
 
-  return doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 10 : yPos + 30
+  // Cast to allow access to `lastAutoTable`
+  const docWithAutoTable = doc as jsPDF & { lastAutoTable?: { finalY?: number } };
+
+  return docWithAutoTable.lastAutoTable?.finalY ? docWithAutoTable.lastAutoTable.finalY + 10 : yPos + 30;
 }
+
 
 // Helper function to add summary
 function addSummary(doc: jsPDF, yPos: number): number {

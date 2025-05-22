@@ -3,7 +3,7 @@ import React from "react";
 import { useAppSelector } from "@/lib/store/hook";
 import { Activity, AlertCircle, CheckCircle2, FileText } from "lucide-react";
 import { motion } from "framer-motion";
-export function ManualExport() {
+export function CsvExport() {
   const { manualResult } = useAppSelector((state) => state.prediction);
   const riskScore = manualResult?.risk_assessment?.score ?? 0;
   const riskLevel =
