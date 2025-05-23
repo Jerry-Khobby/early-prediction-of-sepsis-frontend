@@ -1,6 +1,6 @@
 "use client";
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -10,14 +10,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download, Mail, FileText, Settings, Eye, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { PDFPreview } from "@/components/pdf-preview";
+import { useAppSelector } from "@/lib/store/hook";
+import { useRouter } from "next/navigation";
+import { InlineAlert } from "@/components/ui/inline-alert";
 import {
   downloadPDF,
   emailPDF,
+  prepareReportData,
   type PDFOptions,
 } from "@/components/pdf-service";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function ExportPage() {
+  const router = useRouter();
+  const { csvResult, manualResult, predictionType } = useAppSelector(
+    (state) => state.prediction
+  );
+  const [noResult, setNoResult] = useState(false);
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
@@ -29,6 +38,33 @@ export default function ExportPage() {
     recommendations: true,
     patientData: true,
   });
+
+  useEffect(() => {
+    if (!csvResult && !manualResult) {
+      setNoResult(true);
+    }
+  }, [csvResult, manualResult]);
+
+  if (noResult) {
+    return (
+      <main className="container mx-auto px-4 py-12 flex flex-col items-center justify-center min-h-screen text-center">
+        <InlineAlert
+          title="No Exports Found"
+          description="It looks like you haven't uploaded any data or run a prediction yet."
+        />
+        <p className="mt-4 text-muted-foreground dark:text-gray-400 max-w-md">
+          Please upload a file or enter patient details manually to get a
+          prediction.
+        </p>
+        <button
+          onClick={() => router.push("/upload")}
+          className="mt-6 text-[#44bfb2] text-sm font-medium hover:underline transition"
+        >
+          Go to Upload Page
+        </button>
+      </main>
+    );
+  }
 
   const handleOptionChange = (option: keyof typeof includeOptions) => {
     setIncludeOptions((prev) => ({
@@ -52,19 +88,21 @@ export default function ExportPage() {
     try {
       setIsEmailing(true);
 
+      // Prepare report data based on prediction type
+      const reportData = prepareReportData(
+        predictionType === "manual" ? manualResult : csvResult,
+        "SepsisAI"
+      );
+
       const options: PDFOptions = {
+        reportType: "SepsisAI",
         includeOptions,
-        patientData: {
-          id: "P12345",
-          name: "John Doe",
-          age: 65,
-          gender: "Male",
-          admissionDate: "2024-05-08",
-          department: "Emergency Medicine",
+        style: {
+          primaryColor: [21, 94, 99], // Teal color
         },
       };
 
-      await emailPDF(options, email);
+      await emailPDF(reportData, options, email);
 
       toast({
         title: "Email Sent",
@@ -85,19 +123,22 @@ export default function ExportPage() {
     try {
       setIsDownloading(true);
 
+      // Prepare report data based on prediction type
+      const reportData = prepareReportData(
+        predictionType === "manual" ? manualResult : csvResult,
+        "SepsisAI"
+      );
+
       const options: PDFOptions = {
+        reportType: "SepsisAI",
         includeOptions,
-        patientData: {
-          id: "P12345",
-          name: "John Doe",
-          age: 65,
-          gender: "Male",
-          admissionDate: "2024-05-08",
-          department: "Emergency Medicine",
+        style: {
+          primaryColor: [21, 94, 99], // Teal color
         },
       };
 
       await downloadPDF(
+        reportData,
         options,
         `sepsis-report-${new Date().toISOString().split("T")[0]}.pdf`
       );
@@ -352,7 +393,7 @@ export default function ExportPage() {
                   className="flex-1 p-6 overflow-auto"
                 >
                   <div id="pdf-preview">
-                    <PDFPreview includeOptions={includeOptions} />
+                    <PDFPreview />
                   </div>
                 </TabsContent>
 
@@ -360,45 +401,7 @@ export default function ExportPage() {
                   <div className="rounded-md bg-slate-950 p-4 overflow-auto">
                     <pre className="text-sm text-gray-300 font-mono">
                       {JSON.stringify(
-                        {
-                          patientId: "P12345",
-                          timestamp: new Date().toISOString(),
-                          prediction: {
-                            riskScore: 0.78,
-                            riskLevel: "High",
-                            confidence: 0.92,
-                          },
-                          vitals: {
-                            heartRate: 110,
-                            respiratoryRate: 24,
-                            temperature: 38.5,
-                            meanArterialPressure: 65,
-                            oxygenSaturation: 94,
-                          },
-                          recommendations: [
-                            "Fluid resuscitation",
-                            "Monitor WBC trend",
-                            "Blood cultures",
-                            "Hourly vital sign monitoring",
-                          ],
-                          medications: [
-                            "Piperacillin-tazobactam",
-                            "Vancomycin (if MRSA risk)",
-                            "Consider vasopressors if MAP remains low after fluid resuscitation",
-                          ],
-                          modelExplanation: {
-                            topFeatures: [
-                              { name: "Respiratory Rate", importance: 0.85 },
-                              {
-                                name: "Mean Arterial Pressure",
-                                importance: 0.72,
-                              },
-                              { name: "Heart Rate", importance: 0.65 },
-                              { name: "Temperature", importance: 0.58 },
-                              { name: "O2 Saturation", importance: 0.45 },
-                            ],
-                          },
-                        },
+                        predictionType === "manual" ? manualResult : csvResult,
                         null,
                         2
                       )}
