@@ -2,6 +2,7 @@
 
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
+import { BASE_API_URL } from "@/lib/constant";
 
 // Define types for our report system
 export type RiskAssessment = {
@@ -791,8 +792,37 @@ export const emailPDF = async (
 ): Promise<boolean> => {
   try {
     const pdfBlob = await generatePDF(reportData, options);
-    // In a real app, you would send this to your backend for email processing
-    console.log(`PDF would be sent to ${email} in a real application`);
+    const pdfBase64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        const base64 = result.split(",")[1]; // ✅ extract actual base64
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(pdfBlob);
+    });
+
+    const response = await fetch(`${BASE_API_URL}/api/v1/send-report`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        pdf_base64: pdfBase64,
+        report_name: reportData.reportType,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        typeof errorData.detail === "string"
+          ? errorData.detail
+          : JSON.stringify(errorData.detail) || "Failed to send email"
+      );
+    }
     return true;
   } catch (error) {
     console.error("Error emailing PDF:", error);

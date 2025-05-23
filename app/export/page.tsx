@@ -108,6 +108,8 @@ export default function ExportPage() {
         title: "Email Sent",
         description: `The report has been sent to ${email}`,
       });
+
+      setEmail("")
     } catch (error) {
       toast({
         title: "Error",
