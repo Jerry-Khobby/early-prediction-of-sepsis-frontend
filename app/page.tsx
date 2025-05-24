@@ -1,9 +1,9 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { ArrowRight, Activity, FileText, PieChart } from "lucide-react"
-import { HeroAnimation } from "@/components/hero-animation"
-import { FeatureCard } from "@/components/feature-card"
-import { StepsAnimation } from "@/components/steps-animation"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Activity, FileText, PieChart } from "lucide-react";
+import { HeroAnimation } from "@/components/hero-animation";
+import { FeatureCard } from "@/components/feature-card";
+import { StepsAnimation } from "@/components/steps-animation";
 
 export default function Home() {
   return (
@@ -19,7 +19,8 @@ export default function Home() {
                     Early Sepsis Prediction System
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl dark:text-gray-300">
-                    Advanced AI-powered system for early detection of sepsis using patient vital signs and lab results.
+                    Advanced AI-powered system for early detection of sepsis
+                    using patient vital signs and lab results.
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
@@ -51,25 +52,34 @@ export default function Home() {
                 <div className="inline-block rounded-lg bg-teal-100 dark:bg-teal-900/30 px-3 py-1 text-sm text-teal-700 dark:text-teal-300">
                   Features
                 </div>
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Model Capabilities</h2>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+                  Model Capabilities
+                </h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-                  Our AI model provides comprehensive analysis and prediction for early sepsis detection
+                  Our AI model provides comprehensive analysis and prediction
+                  for early sepsis detection
                 </p>
               </div>
             </div>
             <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 py-12 md:grid-cols-3">
               <FeatureCard
-                icon={<Activity className="h-10 w-10 text-teal-600 dark:text-teal-400" />}
+                icon={
+                  <Activity className="h-10 w-10 text-teal-600 dark:text-teal-400" />
+                }
                 title="Real-Time Prediction"
                 description="Instant risk assessment based on patient vitals and lab results"
               />
               <FeatureCard
-                icon={<FileText className="h-10 w-10 text-amber-600 dark:text-amber-400" />}
+                icon={
+                  <FileText className="h-10 w-10 text-amber-600 dark:text-amber-400" />
+                }
                 title="Doctor-Style Report"
                 description="AI-generated clinical notes and recommendations"
               />
               <FeatureCard
-                icon={<PieChart className="h-10 w-10 text-indigo-600 dark:text-indigo-400" />}
+                icon={
+                  <PieChart className="h-10 w-10 text-indigo-600 dark:text-indigo-400" />
+                }
                 title="Risk-Based Suggestions"
                 description="Personalized treatment and medication recommendations"
               />
@@ -85,7 +95,9 @@ export default function Home() {
                 <div className="inline-block rounded-lg bg-amber-100 dark:bg-amber-900/30 px-3 py-1 text-sm text-amber-700 dark:text-amber-300">
                   Process
                 </div>
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">How It Works</h2>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+                  How It Works
+                </h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
                   Simple 3-step process to get accurate sepsis predictions
                 </p>
@@ -101,15 +113,19 @@ export default function Home() {
         <section className="bg-slate-50 dark:bg-slate-900/50 py-10">
           <div className="container px-4 md:px-6">
             <div className="mx-auto max-w-3xl rounded-lg border border-red-200 bg-white p-6 shadow-sm dark:border-red-900/50 dark:bg-slate-900">
-              <h3 className="text-lg font-semibold text-red-600 dark:text-red-400">Medical Disclaimer</h3>
+              <h3 className="text-lg font-semibold text-red-600 dark:text-red-400">
+                Medical Disclaimer
+              </h3>
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                This tool is not a substitute for professional medical diagnosis. For academic/demonstration use only.
-                Always consult with qualified healthcare providers for medical advice and treatment.
+                This tool is not a substitute for professional medical
+                diagnosis. For academic/demonstration use only. Always consult
+                with qualified healthcare providers for medical advice and
+                treatment.
               </p>
             </div>
           </div>
         </section>
       </main>
     </div>
-  )
+  );
 }
