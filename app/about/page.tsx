@@ -121,7 +121,7 @@ export default function AboutPage() {
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <span className="text-sm font-medium text-muted-foreground">
-                        Accura..
+                        Accuracy
                       </span>
                       <span className="font-medium">92.7% (Test Set)</span>
                     </div>
