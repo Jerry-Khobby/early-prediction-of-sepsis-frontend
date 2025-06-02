@@ -507,22 +507,24 @@ export default function AboutPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {[
                     {
-                      name: "Dr. Jane Smith",
-                      role: "Principal Investigator",
-                      specialty: "Biomedical Informatics",
-                      institution: "University of Example",
+                      name: "Anku Jeremiah Coblah",
+                      role: "Machine Learning Lead",
+                      specialty: "ML and FullStack Development",
+                      institution:
+                        "Kwame Nkrumah University of Science and Technology (KNUST)",
                     },
                     {
                       name: "Dr. John Doe",
                       role: "Machine Learning Lead",
                       specialty: "Deep Learning",
-                      institution: "Institute of Technology",
+                      institution:
+                        "Kwame Nkrumah University of Science and Technology (KNUST)",
                     },
                     {
                       name: "Dr. Sarah Johnson",
                       role: "Clinical Advisor",
                       specialty: "Critical Care Medicine",
-                      institution: "Medical Center",
+                      institution: "Kwame Nkrumah University of Science and Technology (KNUST)",
                     },
                   ].map((member, index) => (
                     <div
