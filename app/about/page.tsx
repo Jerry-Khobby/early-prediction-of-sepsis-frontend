@@ -514,17 +514,18 @@ export default function AboutPage() {
                         "Kwame Nkrumah University of Science and Technology (KNUST)",
                     },
                     {
-                      name: "Dr. John Doe",
+                      name: "Ayinemi Anaamtome Thomas",
                       role: "Machine Learning Lead",
                       specialty: "Deep Learning",
                       institution:
                         "Kwame Nkrumah University of Science and Technology (KNUST)",
                     },
                     {
-                      name: "Dr. Sarah Johnson",
+                      name: "Gyan Newman Charles Emmanuel",
                       role: "Clinical Advisor",
                       specialty: "Critical Care Medicine",
-                      institution: "Kwame Nkrumah University of Science and Technology (KNUST)",
+                      institution:
+                        "Kwame Nkrumah University of Science and Technology (KNUST)",
                     },
                   ].map((member, index) => (
                     <div
@@ -554,7 +555,7 @@ export default function AboutPage() {
                   <h3 className="text-lg font-semibold mb-2">
                     Acknowledgments
                   </h3>
-                  <p className="text-muted-foreground dark:text-gray-300">
+                  <p className="text-muted-foreground dark:text-gray-300 text-sm">
                     We gratefully acknowledge the PhysioNet team for making the
                     dataset available, and all the clinicians and researchers
                     who contributed to this challenge.
