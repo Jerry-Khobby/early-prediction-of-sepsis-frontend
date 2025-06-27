@@ -14,6 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { FormData } from "@/lib/form-type";
 import { transformFormData } from "@/lib/utils";
 import { ReloadIcon } from "@radix-ui/react-icons";
+import { AlertCircle } from "lucide-react";
 import {
   setManualPredictionResult,
   setPredictionError,
@@ -22,6 +23,7 @@ import { useToast } from "./ui/use-toast";
 import { BASE_API_URL } from "@/lib/constant";
 import { useAppDispatch } from "@/lib/store/hook";
 import { useRouter } from "next/navigation";
+import { validationRules, validateField } from "@/lib/form-validation";
 
 const UploadManual = () => {
   const router = useRouter();
@@ -29,17 +31,51 @@ const UploadManual = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [completionPercentage, setCompletionPercentage] = useState(0);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const {
     register,
     watch,
     handleSubmit,
-    formState: { isValid },
+    formState: { isValid, errors },
+    setError,
+    clearErrors,
   } = useForm<FormData>({
     mode: "onChange",
   });
 
   // Watch all form fields to determine if the form is valid
   const formValues = watch();
+
+  useEffect(() => {
+    const newErrors: Record<string, string> = {};
+
+    // Validate all fields
+    Object.keys(validationRules).forEach((fieldName) => {
+      const rules = validationRules[fieldName as keyof typeof validationRules];
+
+      if (rules.count) {
+        // Handle time series fields (arrays)
+        const values = formValues[fieldName as keyof FormData] as string[];
+        if (values) {
+          values.forEach((value, index) => {
+            const error = validateField(fieldName, value, index);
+            if (error) {
+              newErrors[`${fieldName}.${index}`] = error;
+            }
+          });
+        }
+      } else {
+        // Handle single value fields
+        const value = formValues[fieldName as keyof FormData];
+        const error = validateField(fieldName, value as string);
+        if (error) {
+          newErrors[fieldName] = error;
+        }
+      }
+    });
+
+    setFieldErrors(newErrors);
+  }, [formValues]);
 
   // Calculate form completion percentage
   useEffect(() => {
@@ -110,7 +146,9 @@ const UploadManual = () => {
   }, [formValues]);
 
   const isFormValid = () => {
-    return completionPercentage === 100;
+    return (
+      completionPercentage === 100 && Object.keys(fieldErrors).length === 0
+    );
   };
 
   const renderTimeSeriesInputs = (
@@ -118,10 +156,11 @@ const UploadManual = () => {
     label: string,
     unit: string
   ) => {
+    const rules = validationRules[name];
     return (
       <div className="space-y-2">
         <Label>
-          {label} ({unit})
+          {label} ({unit}) - Range: {rules.min}-{rules.max}
         </Label>
         <div className="grid grid-cols-5 gap-2">
           {Array.from({ length: 10 }).map((_, index) => (
@@ -129,12 +168,20 @@ const UploadManual = () => {
               <Label className="text-xs text-muted-foreground">
                 Reading {index + 1}
               </Label>
-              <Input
-                {...register(`${name}.${index}`)}
-                type="number"
-                className="h-8"
-                placeholder={`#${index + 1}`}
-              />
+              <div className="relative">
+                <Input
+                  {...register(`${name}.${index}`)}
+                  type="number"
+                  className={`h-8 ${fieldErrors[`${name}.${index}`] ? "" : ""}`}
+                  placeholder={`#${index + 1}`}
+                  min={rules.min}
+                  max={rules.max}
+                  step={rules.integer ? "1" : "0.1"}
+                />
+                {fieldErrors[`${name}.${index}`] && (
+                  <AlertCircle className="absolute right-2 top-2 h-4 w-4" />
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -142,7 +189,53 @@ const UploadManual = () => {
     );
   };
 
+  const renderInput = (
+    fieldName: keyof FormData,
+    label: string,
+    placeholder: string,
+    unit?: string
+  ) => {
+    const rules = validationRules[fieldName as keyof typeof validationRules];
+    const displayLabel = unit ? `${label} (${unit})` : label;
+    const rangeInfo = rules ? ` - Range: ${rules.min}-${rules.max}` : "";
+
+    return (
+      <div className="space-y-2">
+        <Label htmlFor={fieldName}>
+          {displayLabel}
+          {rangeInfo}
+        </Label>
+        <div className="relative">
+          <Input
+            {...register(fieldName)}
+            id={fieldName}
+            type="number"
+            placeholder={placeholder}
+            className={fieldErrors[fieldName] ? "border-red-500" : ""}
+            min={rules?.min}
+            max={rules?.max}
+            step={rules?.integer ? "1" : "0.1"}
+          />
+          {fieldErrors[fieldName] && (
+            <AlertCircle className="absolute right-2 top-2 h-4 w-4 text-red-500" />
+          )}
+        </div>
+        {fieldErrors[fieldName] && (
+          <p className="text-xs text-red-500">{fieldErrors[fieldName]}</p>
+        )}
+      </div>
+    );
+  };
+
   const onSubmit = async (data: FormData) => {
+    if (Object.keys(fieldErrors).length > 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please fix all validation errors before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
     setIsLoading(true);
     try {
       const payload = transformFormData(data);
@@ -183,20 +276,31 @@ const UploadManual = () => {
       setIsLoading(false);
     }
   };
+  const errorCount = Object.keys(fieldErrors).length;
   return (
     <TabsContent value="manual">
       <Card>
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-semibold">Enter Patient Data</h3>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground ">
-                Form Completion: {completionPercentage}%
-              </span>
-              <Progress
-                value={completionPercentage}
-                className="w-[100px] [&>div]:bg-[#44bfb2] "
-              />
+            <div className="flex items-center gap-4">
+              {errorCount > 0 && (
+                <div className="flex items-center gap-1 text-red-500">
+                  <AlertCircle className="h-4 w-4" />
+                  <span className="text-sm">
+                    {errorCount} validation errors
+                  </span>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground ">
+                  Form Completion: {completionPercentage}%
+                </span>
+                <Progress
+                  value={completionPercentage}
+                  className="w-[100px] [&>div]:bg-[#44bfb2] "
+                />
+              </div>
             </div>
           </div>
 
@@ -574,8 +678,10 @@ const UploadManual = () => {
 
         <div className="p-6 bg-gray-50 dark:bg-slate-900/50 flex justify-between items-center">
           <div className="text-sm text-muted-foreground">
-            {completionPercentage === 100
-              ? "All required fields are filled"
+            {isFormValid()
+              ? "All required fields are filled and valid"
+              : errorCount > 0
+              ? `${errorCount} validation errors need to be fixed`
               : `${completionPercentage}% of required fields are filled`}
           </div>
           <Button
