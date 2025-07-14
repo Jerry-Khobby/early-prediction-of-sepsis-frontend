@@ -7,14 +7,13 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, FileUp, Table, ArrowRight } from "lucide-react";
+import { Upload, FileUp, Table, ArrowRight, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { Progress } from "@/components/ui/progress";
 import { FormData } from "@/lib/form-type";
 import { transformFormData } from "@/lib/utils";
 import { ReloadIcon } from "@radix-ui/react-icons";
-import { AlertCircle } from "lucide-react";
 import {
   setManualPredictionResult,
   setPredictionError,
@@ -32,56 +31,88 @@ const UploadManual = () => {
   const { toast } = useToast();
   const [completionPercentage, setCompletionPercentage] = useState(0);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  
   const {
     register,
     watch,
     handleSubmit,
     formState: { isValid, errors },
-    setError,
-    clearErrors,
+    setValue,
+    trigger,
   } = useForm<FormData>({
     mode: "onChange",
+    resolver: async (data) => {
+      const errors: Record<string, any> = {};
+      const values: Record<string, any> = {};
+
+      // Validate each field
+      Object.keys(data).forEach((fieldName) => {
+        const fieldValue = data[fieldName as keyof FormData];
+        
+        if (Array.isArray(fieldValue)) {
+          // Handle time series fields
+          const fieldErrors: string[] = [];
+          fieldValue.forEach((value, index) => {
+            const error = validateField(fieldName, value || '', index);
+            if (error) {
+              fieldErrors[index] = error;
+            }
+          });
+          
+          if (fieldErrors.length > 0) {
+            errors[fieldName] = { type: "validation", message: fieldErrors };
+          }
+          values[fieldName] = fieldValue;
+        } else {
+          // Handle regular fields
+          const error = validateField(fieldName, fieldValue || '');
+          if (error) {
+            errors[fieldName] = { type: "validation", message: error };
+          }
+          values[fieldName] = fieldValue;
+        }
+      });
+
+      return {
+        values: Object.keys(errors).length === 0 ? values : {},
+        errors,
+      };
+    },
   });
 
   // Watch all form fields to determine if the form is valid
   const formValues = watch();
 
-  useEffect(() => {
-    const newErrors: Record<string, string> = {};
-
-    // Validate all fields
-    Object.keys(validationRules).forEach((fieldName) => {
-      const rules = validationRules[fieldName as keyof typeof validationRules];
-
-      if (rules.count) {
-        // Handle time series fields (arrays)
-        const values = formValues[fieldName as keyof FormData] as string[];
-        if (values) {
-          values.forEach((value, index) => {
-            const error = validateField(fieldName, value, index);
-            if (error) {
-              newErrors[`${fieldName}.${index}`] = error;
-            }
-          });
-        }
-      } else {
-        // Handle single value fields
-        const value = formValues[fieldName as keyof FormData];
-        const error = validateField(fieldName, value as string);
-        if (error) {
-          newErrors[fieldName] = error;
-        }
+  // Real-time validation for individual fields
+  const validateSingleField = (fieldName: string, value: string | number | string[], index?: number) => {
+    let error: string | null = null;
+    
+    if (Array.isArray(value)) {
+      // Handle array validation (time series)
+      if (index !== undefined) {
+        error = validateField(fieldName, value[index], index);
       }
-    });
+    } else {
+      // Handle single value validation
+      error = validateField(fieldName, value, index);
+    }
+    
+    const errorKey = index !== undefined ? `${fieldName}.${index}` : fieldName;
+    
+    setFieldErrors(prev => ({
+      ...prev,
+      [errorKey]: error || ''
+    }));
+    
+    return error;
+  };
 
-    setFieldErrors(newErrors);
-  }, [formValues]);
-
-  // Calculate form completion percentage
+  // Calculate form completion percentage with validation
   useEffect(() => {
     const calculateCompletion = () => {
       let totalFields = 0;
       let completedFields = 0;
+      let validFields = 0;
 
       // Check high correlation arrays (each needs 10 values)
       const timeSeriesFields = ["HR", "MAP", "O2Sat", "SBP", "Resp"];
@@ -89,52 +120,33 @@ const UploadManual = () => {
         const values = formValues[field as keyof FormData] as string[];
         if (values) {
           totalFields += 10;
-          completedFields += values.filter((v) => v && v.trim() !== "").length;
+          values.forEach((value, index) => {
+            if (value && value.trim() !== "") {
+              completedFields++;
+              const error = validateField(field, value || '', index);
+              if (!error) validFields++;
+            }
+          });
         }
       });
 
       // Check other fields
       const otherFields = [
-        "Unit1",
-        "Gender",
-        "HospAdmTime",
-        "Age",
-        "DBP",
-        "Temp",
-        "Glucose",
-        "Potassium",
-        "Hct",
-        "FiO2",
-        "Hgb",
-        "pH",
-        "BUN",
-        "WBC",
-        "Magnesium",
-        "Creatinine",
-        "Platelets",
-        "Calcium",
-        "PaCO2",
-        "BaseExcess",
-        "Chloride",
-        "HCO3",
-        "Phosphate",
-        "EtCO2",
-        "SaO2",
-        "PTT",
-        "Lactate",
-        "AST",
-        "Alkalinephos",
-        "Bilirubin_total",
-        "TroponinI",
-        "Fibrinogen",
-        "Bilirubin_direct",
+        "Unit1", "Gender", "HospAdmTime", "Age", "DBP", "Temp", "Glucose",
+        "Potassium", "Hct", "FiO2", "Hgb", "pH", "BUN", "WBC", "Magnesium",
+        "Creatinine", "Platelets", "Calcium", "PaCO2", "BaseExcess", "Chloride",
+        "HCO3", "Phosphate", "EtCO2", "SaO2", "PTT", "Lactate", "AST",
+        "Alkalinephos", "Bilirubin_total", "TroponinI", "Fibrinogen", "Bilirubin_direct",
       ];
 
       otherFields.forEach((field) => {
         totalFields++;
-        const value = formValues[field as keyof FormData];
+        const rawValue = formValues[field as keyof FormData];
+        const value = Array.isArray(rawValue)?rawValue.join(",") : rawValue;
         if (value && value.toString().trim() !== "") {
           completedFields++;
+          const error = validateField(field, value || '');
+          if (!error) validFields++;
         }
       });
 
@@ -146,9 +158,9 @@ const UploadManual = () => {
   }, [formValues]);
 
   const isFormValid = () => {
-    return (
-      completionPercentage === 100 && Object.keys(fieldErrors).length === 0
-    );
+    // Check if all fields are completed and valid
+    const hasErrors = Object.values(fieldErrors).some(error => error);
+    return completionPercentage === 100 && !hasErrors;
   };
 
   const renderTimeSeriesInputs = (
@@ -156,86 +168,118 @@ const UploadManual = () => {
     label: string,
     unit: string
   ) => {
-    const rules = validationRules[name];
     return (
       <div className="space-y-2">
         <Label>
-          {label} ({unit}) - Range: {rules.min}-{rules.max}
+          {label} ({unit})
         </Label>
         <div className="grid grid-cols-5 gap-2">
-          {Array.from({ length: 10 }).map((_, index) => (
-            <div key={index} className="space-y-1">
-              <Label className="text-xs text-muted-foreground">
-                Reading {index + 1}
-              </Label>
-              <div className="relative">
-                <Input
-                  {...register(`${name}.${index}`)}
-                  type="number"
-                  className={`h-8 ${fieldErrors[`${name}.${index}`] ? "" : ""}`}
-                  placeholder={`#${index + 1}`}
-                  min={rules.min}
-                  max={rules.max}
-                  step={rules.integer ? "1" : "0.1"}
-                />
-                {fieldErrors[`${name}.${index}`] && (
-                  <AlertCircle className="absolute right-2 top-2 h-4 w-4" />
+          {Array.from({ length: 10 }).map((_, index) => {
+            const errorKey = `${name}.${index}`;
+            const hasError = fieldErrors[errorKey];
+            
+            return (
+              <div key={index} className="space-y-1">
+                <Label className="text-xs text-muted-foreground">
+                  Reading {index + 1}
+                </Label>
+                <div className="relative">
+                  <Input
+                    {...register(`${name}.${index}`)}
+                    type="number"
+                    className={`h-8 ${hasError ? 'border-red-500 focus:border-red-500' : ''}`}
+                    placeholder={`#${index + 1}`}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setValue(`${name}.${index}`, value);
+                      validateSingleField(name, value, index);
+                    }}
+                  />
+                  {hasError && (
+                    <AlertCircle className="absolute right-2 top-2 h-4 w-4 text-red-500" />
+                  )}
+                </div>
+                {hasError && (
+                  <p className="text-xs text-red-500 mt-1">{hasError}</p>
                 )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );
   };
 
-  const renderInput = (
-    fieldName: keyof FormData,
+  const renderInputField = (
+    name: keyof FormData,
     label: string,
     placeholder: string,
-    unit?: string
+    type: string = "number",
+    step?: string
   ) => {
-    const rules = validationRules[fieldName as keyof typeof validationRules];
-    const displayLabel = unit ? `${label} (${unit})` : label;
-    const rangeInfo = rules ? ` - Range: ${rules.min}-${rules.max}` : "";
-
+    const hasError = fieldErrors[name];
+    
     return (
       <div className="space-y-2">
-        <Label htmlFor={fieldName}>
-          {displayLabel}
-          {rangeInfo}
-        </Label>
+        <Label htmlFor={name}>{label}</Label>
         <div className="relative">
           <Input
-            {...register(fieldName)}
-            id={fieldName}
-            type="number"
+            {...register(name)}
+            id={name}
+            type={type}
+            step={step}
             placeholder={placeholder}
-            className={fieldErrors[fieldName] ? "border-red-500" : ""}
-            min={rules?.min}
-            max={rules?.max}
-            step={rules?.integer ? "1" : "0.1"}
+            className={hasError ? 'border-red-500 focus:border-red-500' : ''}
+            onChange={(e) => {
+              const value = e.target.value;
+              setValue(name, value);
+              validateSingleField(name, value);
+            }}
           />
-          {fieldErrors[fieldName] && (
+          {hasError && (
             <AlertCircle className="absolute right-2 top-2 h-4 w-4 text-red-500" />
           )}
         </div>
-        {fieldErrors[fieldName] && (
-          <p className="text-xs text-red-500">{fieldErrors[fieldName]}</p>
+        {hasError && (
+          <p className="text-xs text-red-500 mt-1">{hasError}</p>
         )}
       </div>
     );
   };
 
   const onSubmit = async (data: FormData) => {
-    if (Object.keys(fieldErrors).length > 0) {
+    // Final validation before submission
+    const allErrors: Record<string, string> = {};
+    
+    // Validate all fields one more time
+    Object.keys(data).forEach((fieldName) => {
+      const fieldValue = data[fieldName as keyof FormData];
+      
+      if (Array.isArray(fieldValue)) {
+        fieldValue.forEach((value, index) => {
+          const error = validateField(fieldName, value || '', index);
+          if (error) {
+            allErrors[`${fieldName}.${index}`] = error;
+          }
+        });
+      } else {
+        const error = validateField(fieldName, fieldValue || '');
+        if (error) {
+          allErrors[fieldName] = error;
+        }
+      }
+    });
+
+    if (Object.keys(allErrors).length > 0) {
+      setFieldErrors(allErrors);
       toast({
         title: "Validation Error",
-        description: "Please fix all validation errors before submitting.",
+        description: "Please fix the validation errors before submitting.",
         variant: "destructive",
       });
       return;
     }
+
     setIsLoading(true);
     try {
       const payload = transformFormData(data);
@@ -247,10 +291,12 @@ const UploadManual = () => {
         },
         body: JSON.stringify(payload),
       });
+      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || "Failed to run prediction");
       }
+      
       const result = await response.json();
       dispatch(setManualPredictionResult(result));
       toast({
@@ -258,49 +304,39 @@ const UploadManual = () => {
         description: "The prediction has been successfully completed.",
         variant: "default",
       });
+      
       setTimeout(() => {
         router.push("/results");
       }, 1500);
     } catch (error) {
       console.error("Prediction error:", error);
       const errorMessage =
-        error instanceof Error ? error.message : "An unknown error occured";
+        error instanceof Error ? error.message : "An unknown error occurred";
       dispatch(setPredictionError(errorMessage));
       toast({
         title: "Prediction Failed",
-        description:
-          error instanceof Error ? error.message : "An unknown error occured",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
-  const errorCount = Object.keys(fieldErrors).length;
+
   return (
     <TabsContent value="manual">
       <Card>
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-semibold">Enter Patient Data</h3>
-            <div className="flex items-center gap-4">
-              {errorCount > 0 && (
-                <div className="flex items-center gap-1 text-red-500">
-                  <AlertCircle className="h-4 w-4" />
-                  <span className="text-sm">
-                    {errorCount} validation errors
-                  </span>
-                </div>
-              )}
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground ">
-                  Form Completion: {completionPercentage}%
-                </span>
-                <Progress
-                  value={completionPercentage}
-                  className="w-[100px] [&>div]:bg-[#44bfb2] "
-                />
-              </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                Form Completion: {completionPercentage}%
+              </span>
+              <Progress
+                value={completionPercentage}
+                className="w-[100px] [&>div]:bg-[#44bfb2]"
+              />
             </div>
           </div>
 
@@ -312,17 +348,9 @@ const UploadManual = () => {
               </h4>
               <div className="space-y-6">
                 {renderTimeSeriesInputs("HR", "Heart Rate", "bpm")}
-                {renderTimeSeriesInputs(
-                  "MAP",
-                  "Mean Arterial Pressure",
-                  "mmHg"
-                )}
+                {renderTimeSeriesInputs("MAP", "Mean Arterial Pressure", "mmHg")}
                 {renderTimeSeriesInputs("O2Sat", "O2 Saturation", "%")}
-                {renderTimeSeriesInputs(
-                  "SBP",
-                  "Systolic Blood Pressure",
-                  "mmHg"
-                )}
+                {renderTimeSeriesInputs("SBP", "Systolic Blood Pressure", "mmHg")}
                 {renderTimeSeriesInputs("Resp", "Respiratory Rate", "bpm")}
               </div>
             </div>
@@ -333,45 +361,10 @@ const UploadManual = () => {
                 Demographics
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="unit1">Unit</Label>
-                  <Input
-                    {...register("Unit1")}
-                    id="unit1"
-                    type="number"
-                    placeholder="e.g., 1"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="gender">Gender (0=Female, 1=Male)</Label>
-                  <Input
-                    {...register("Gender")}
-                    id="gender"
-                    type="number"
-                    placeholder="0 or 1"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="hospAdmTime">
-                    Hospital Admission Time (hours)
-                  </Label>
-                  <Input
-                    {...register("HospAdmTime")}
-                    id="hospAdmTime"
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g., 24.5"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="age">Age</Label>
-                  <Input
-                    {...register("Age")}
-                    id="age"
-                    type="number"
-                    placeholder="e.g., 65"
-                  />
-                </div>
+                {renderInputField("Unit1", "Unit", "e.g., 1")}
+                {renderInputField("Gender", "Gender (0=Female, 1=Male)", "0 or 1")}
+                {renderInputField("HospAdmTime", "Hospital Admission Time (hours)", "e.g., 24.5", "number", "0.1")}
+                {renderInputField("Age", "Age", "e.g., 65")}
               </div>
             </div>
 
@@ -381,25 +374,8 @@ const UploadManual = () => {
                 Vital Signs
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="dbp">Diastolic Blood Pressure (mmHg)</Label>
-                  <Input
-                    {...register("DBP")}
-                    id="dbp"
-                    type="number"
-                    placeholder="e.g., 80"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="temp">Temperature (°C)</Label>
-                  <Input
-                    {...register("Temp")}
-                    id="temp"
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g., 37.2"
-                  />
-                </div>
+                {renderInputField("DBP", "Diastolic Blood Pressure (mmHg)", "e.g., 80")}
+                {renderInputField("Temp", "Temperature (°C)", "e.g., 37.2", "number", "0.1")}
               </div>
             </div>
 
@@ -409,268 +385,33 @@ const UploadManual = () => {
                 Blood Chemistry
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="glucose">Glucose (mg/dL)</Label>
-                  <Input
-                    {...register("Glucose")}
-                    id="glucose"
-                    type="number"
-                    placeholder="e.g., 110"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="potassium">Potassium (mEq/L)</Label>
-                  <Input
-                    {...register("Potassium")}
-                    id="potassium"
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g., 4.2"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="hct">Hematocrit (%)</Label>
-                  <Input
-                    {...register("Hct")}
-                    id="hct"
-                    type="number"
-                    placeholder="e.g., 38"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="fio2">FiO2</Label>
-                  <Input
-                    {...register("FiO2")}
-                    id="fio2"
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g., 0.5"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="hgb">Hemoglobin (g/dL)</Label>
-                  <Input
-                    {...register("Hgb")}
-                    id="hgb"
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g., 12.5"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="ph">pH</Label>
-                  <Input
-                    {...register("pH")}
-                    id="ph"
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g., 7.4"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bun">BUN (mg/dL)</Label>
-                  <Input
-                    {...register("BUN")}
-                    id="bun"
-                    type="number"
-                    placeholder="e.g., 18"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="wbc">WBC (K/uL)</Label>
-                  <Input
-                    {...register("WBC")}
-                    id="wbc"
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g., 8.5"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="magnesium">Magnesium (mg/dL)</Label>
-                  <Input
-                    {...register("Magnesium")}
-                    id="magnesium"
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g., 2.1"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="creatinine">Creatinine (mg/dL)</Label>
-                  <Input
-                    {...register("Creatinine")}
-                    id="creatinine"
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g., 1.2"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="platelets">Platelets (K/uL)</Label>
-                  <Input
-                    {...register("Platelets")}
-                    id="platelets"
-                    type="number"
-                    placeholder="e.g., 250"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="calcium">Calcium (mg/dL)</Label>
-                  <Input
-                    {...register("Calcium")}
-                    id="calcium"
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g., 9.5"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="paco2">PaCO2 (mmHg)</Label>
-                  <Input
-                    {...register("PaCO2")}
-                    id="paco2"
-                    type="number"
-                    placeholder="e.g., 40"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="baseExcess">Base Excess (mEq/L)</Label>
-                  <Input
-                    {...register("BaseExcess")}
-                    id="baseExcess"
-                    type="number"
-                    placeholder="e.g., 0"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="chloride">Chloride (mEq/L)</Label>
-                  <Input
-                    {...register("Chloride")}
-                    id="chloride"
-                    type="number"
-                    placeholder="e.g., 100"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="hco3">HCO3 (mEq/L)</Label>
-                  <Input
-                    {...register("HCO3")}
-                    id="hco3"
-                    type="number"
-                    placeholder="e.g., 24"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phosphate">Phosphate (mg/dL)</Label>
-                  <Input
-                    {...register("Phosphate")}
-                    id="phosphate"
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g., 3.5"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="etco2">EtCO2 (mmHg)</Label>
-                  <Input
-                    {...register("EtCO2")}
-                    id="etco2"
-                    type="number"
-                    placeholder="e.g., 35"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sao2">SaO2 (%)</Label>
-                  <Input
-                    {...register("SaO2")}
-                    id="sao2"
-                    type="number"
-                    placeholder="e.g., 97"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="ptt">PTT (seconds)</Label>
-                  <Input
-                    {...register("PTT")}
-                    id="ptt"
-                    type="number"
-                    placeholder="e.g., 30"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lactate">Lactate (mmol/L)</Label>
-                  <Input
-                    {...register("Lactate")}
-                    id="lactate"
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g., 1.5"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="ast">AST (U/L)</Label>
-                  <Input
-                    {...register("AST")}
-                    id="ast"
-                    type="number"
-                    placeholder="e.g., 25"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="alkalinephos">
-                    Alkaline Phosphatase (U/L)
-                  </Label>
-                  <Input
-                    {...register("Alkalinephos")}
-                    id="alkalinephos"
-                    type="number"
-                    placeholder="e.g., 80"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bilirubin_total">
-                    Total Bilirubin (mg/dL)
-                  </Label>
-                  <Input
-                    {...register("Bilirubin_total")}
-                    id="bilirubin_total"
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g., 0.8"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="troponini">Troponin I (ng/mL)</Label>
-                  <Input
-                    {...register("TroponinI")}
-                    id="troponini"
-                    type="number"
-                    step="0.01"
-                    placeholder="e.g., 0.01"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="fibrinogen">Fibrinogen (mg/dL)</Label>
-                  <Input
-                    {...register("Fibrinogen")}
-                    id="fibrinogen"
-                    type="number"
-                    placeholder="e.g., 300"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bilirubin_direct">
-                    Direct Bilirubin (mg/dL)
-                  </Label>
-                  <Input
-                    {...register("Bilirubin_direct")}
-                    id="bilirubin_direct"
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g., 0.2"
-                  />
-                </div>
+                {renderInputField("Glucose", "Glucose (mg/dL)", "e.g., 110")}
+                {renderInputField("Potassium", "Potassium (mEq/L)", "e.g., 4.2", "number", "0.1")}
+                {renderInputField("Hct", "Hematocrit (%)", "e.g., 38")}
+                {renderInputField("FiO2", "FiO2", "e.g., 0.5", "number", "0.1")}
+                {renderInputField("Hgb", "Hemoglobin (g/dL)", "e.g., 12.5", "number", "0.1")}
+                {renderInputField("pH", "pH", "e.g., 7.4", "number", "0.1")}
+                {renderInputField("BUN", "BUN (mg/dL)", "e.g., 18")}
+                {renderInputField("WBC", "WBC (K/uL)", "e.g., 8.5", "number", "0.1")}
+                {renderInputField("Magnesium", "Magnesium (mg/dL)", "e.g., 2.1", "number", "0.1")}
+                {renderInputField("Creatinine", "Creatinine (mg/dL)", "e.g., 1.2", "number", "0.1")}
+                {renderInputField("Platelets", "Platelets (K/uL)", "e.g., 250")}
+                {renderInputField("Calcium", "Calcium (mg/dL)", "e.g., 9.5", "number", "0.1")}
+                {renderInputField("PaCO2", "PaCO2 (mmHg)", "e.g., 40")}
+                {renderInputField("BaseExcess", "Base Excess (mEq/L)", "e.g., 0")}
+                {renderInputField("Chloride", "Chloride (mEq/L)", "e.g., 100")}
+                {renderInputField("HCO3", "HCO3 (mEq/L)", "e.g., 24")}
+                {renderInputField("Phosphate", "Phosphate (mg/dL)", "e.g., 3.5", "number", "0.1")}
+                {renderInputField("EtCO2", "EtCO2 (mmHg)", "e.g., 35")}
+                {renderInputField("SaO2", "SaO2 (%)", "e.g., 97")}
+                {renderInputField("PTT", "PTT (seconds)", "e.g., 30")}
+                {renderInputField("Lactate", "Lactate (mmol/L)", "e.g., 1.5", "number", "0.1")}
+                {renderInputField("AST", "AST (U/L)", "e.g., 25")}
+                {renderInputField("Alkalinephos", "Alkaline Phosphatase (U/L)", "e.g., 80")}
+                {renderInputField("Bilirubin_total", "Total Bilirubin (mg/dL)", "e.g., 0.8", "number", "0.1")}
+                {renderInputField("TroponinI", "Troponin I (ng/mL)", "e.g., 0.01", "number", "0.01")}
+                {renderInputField("Fibrinogen", "Fibrinogen (mg/dL)", "e.g., 300")}
+                {renderInputField("Bilirubin_direct", "Direct Bilirubin (mg/dL)", "e.g., 0.2", "number", "0.1")}
               </div>
             </div>
           </form>
@@ -678,10 +419,8 @@ const UploadManual = () => {
 
         <div className="p-6 bg-gray-50 dark:bg-slate-900/50 flex justify-between items-center">
           <div className="text-sm text-muted-foreground">
-            {isFormValid()
-              ? "All required fields are filled and valid"
-              : errorCount > 0
-              ? `${errorCount} validation errors need to be fixed`
+            {completionPercentage === 100
+              ? "All required fields are filled"
               : `${completionPercentage}% of required fields are filled`}
           </div>
           <Button
