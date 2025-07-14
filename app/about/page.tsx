@@ -105,11 +105,13 @@ export default function AboutPage() {
                   </h2>
 
                   <p className="text-muted-foreground dark:text-gray-300">
-                    This project implements an LSTM-based sepsis prediction
-                    model using data from the PhysioNet Computing in Cardiology
-                    Challenge 2019. The model analyzes 10 hours of clinical data
-                    to predict sepsis onset within the next hour, achieving an
-                    AUC of 0.76 on the test set.
+                    This project implements a CNN-LSTM hybrid model for early
+                    sepsis prediction using clinical data from the PhysioNet
+                    2019 Challenge. The model leverages convolutional layers to
+                    extract local temporal features and bidirectional LSTM
+                    layers to capture sequential dependencies. Using a 10-hour
+                    sliding window, the model predicts sepsis onset within the
+                    next hour and achieves an AUC of 0.7615 on the test set.
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
@@ -117,7 +119,9 @@ export default function AboutPage() {
                       <span className="text-sm font-medium text-muted-foreground">
                         Model Type
                       </span>
-                      <span className="font-medium">LSTM Neural Network</span>
+                      <span className="font-medium">
+                        CNN-LSTM Neural Network
+                      </span>
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <span className="text-sm font-medium text-muted-foreground">
@@ -381,9 +385,12 @@ export default function AboutPage() {
               <Card className="p-6">
                 <h2 className="text-2xl font-bold mb-2">Model Architecture</h2>
                 <p className="text-muted-foreground dark:text-gray-300 max-w-3xl mb-6">
-                  Our hybrid architecture combines LSTM networks for time-series
-                  data with dense networks for static features, merged through
-                  an additive layer.
+                  Our hybrid model integrates convolutional and LSTM layers for
+                  time-series processing with a separate pathway for static
+                  features. This CNN-LSTM architecture enhances the model’s
+                  ability to capture both local patterns and long-term
+                  dependencies, improving performance in early sepsis
+                  prediction.
                 </p>
 
                 <div className="mb-8">
@@ -401,6 +408,10 @@ export default function AboutPage() {
                         </h4>
                         <ul className="text-sm space-y-1 text-gray-600 dark:text-gray-400">
                           <li>• Input shape: (10, n_time_series_features)</li>
+                          <li>• Conv1D (64 filters, kernel size 3, ReLU)</li>
+                          <li>• MaxPooling1D</li>
+                          <li>• Conv1D (128 filters, kernel size 3, ReLU)</li>
+                          <li>• MaxPooling1D</li>
                           <li>
                             • Bidirectional LSTM (100 units,
                             return_sequences=True)
@@ -478,7 +489,7 @@ export default function AboutPage() {
                         Performance Metrics
                       </h4>
                       <ul className="mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                        <li>• Test set AUC: 0.76</li>
+                        <li>• Test set AUC: 0.7615</li>
                         <li>
                           • Validation performance matches test performance
                         </li>
