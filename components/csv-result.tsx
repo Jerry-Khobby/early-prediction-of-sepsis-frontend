@@ -6,72 +6,123 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle, FileText, BarChart2, Download } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { PredictionLoading } from "./predictionLoading";
 import Link from "next/link";
 import { ScrollArea } from "./ui/scroll-area";
 import { Badge } from "./ui/badge";
 import { User } from "lucide-react";
+import { InlineAlert } from "./ui/inline-alert";
+import { useAppSelector } from "@/lib/store/hook";
 
-const patientsData = [
-  { id: "P001", riskScore: 0.85 },
-  { id: "P002", riskScore: 0.23 },
-  { id: "P003", riskScore: 0.67 },
-  { id: "P004", riskScore: 0.91 },
-  { id: "P005", riskScore: 0.15 },
-  { id: "P006", riskScore: 0.78 },
-  { id: "P007", riskScore: 0.34 },
-  { id: "P008", riskScore: 0.82 },
-  { id: "P009", riskScore: 0.56 },
-  { id: "P010", riskScore: 0.41 },
-  { id: "P011", riskScore: 0.73 },
-  { id: "P012", riskScore: 0.19 },
-  { id: "P013", riskScore: 0.88 },
-  { id: "P014", riskScore: 0.62 },
-  { id: "P015", riskScore: 0.27 },
-  { id: "P016", riskScore: 0.79 },
-  { id: "P017", riskScore: 0.45 },
-  { id: "P018", riskScore: 0.84 },
-  { id: "P019", riskScore: 0.38 },
-  { id: "P020", riskScore: 0.71 },
-];
+import { CsvPredictionResult } from "@/lib/store/prediction";
+
+
+// The error I was facing here was ,  the data structure of displaying the results 
 
 export function CsvResult() {
-  const [selectedPatient, setSelectedPatient] = useState(patientsData[0]);
-  const riskScore = selectedPatient.riskScore;
+  const { csvResult, predictionType } = useAppSelector(
+    (state) => state.prediction
+  );
+  const [selectedPatient, setSelectedPatient] =
+    useState<CsvPredictionResult | null>(null);
   const router = useRouter();
-  const getRiskLevel = (score: number) => {
-    if (score >= 0.75)
-      return { level: "High", color: "text-red-600 dark:text-red-400" };
-    if (score >= 0.5)
-      return {
-        level: "Moderate",
-        color: "text-amber-600 dark:text-amber-400",
-      };
-    return { level: "Low", color: "text-green-600 dark:text-green-400" };
-  };
-  const riskInfo = getRiskLevel(riskScore);
 
-  const getRiskBadgeVariant = (score: number) => {
-    if (score >= 0.75) return "destructive";
-    if (score >= 0.5) return "secondary";
-    return "default";
+  // Set first patient as selected when component mounts or csvResult changes
+  useEffect(() => {
+    if (
+      csvResult?.reports &&
+      csvResult.reports.length > 0 &&
+      !selectedPatient
+    ) {
+      setSelectedPatient(csvResult.reports[0]);
+    }
+  }, [csvResult]);
+
+  // Return early if no CSV results
+  if (!csvResult || !csvResult.reports || csvResult.reports.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-muted-foreground">
+          No CSV prediction results available
+        </p>
+      </div>
+    );
+  }
+  if (!selectedPatient || !selectedPatient.report?.patient_report) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-muted-foreground">Loading patient data...</p>
+      </div>
+    );
+  }
+
+  const getRiskLevel = (level: string) => {
+    switch (level.toLowerCase()) {
+      case "high":
+        return { level: "High", color: "text-red-600 dark:text-red-400" };
+      case "moderate":
+      case "medium":
+        return {
+          level: "Moderate",
+          color: "text-amber-600 dark:text-amber-400",
+        };
+      default:
+        return { level: "Low", color: "text-green-600 dark:text-green-400" };
+    }
   };
 
+  const getRiskBadgeVariant = (level: string) => {
+    switch (level.toLowerCase()) {
+      case "high":
+        return "destructive";
+      case "moderate":
+      case "medium":
+        return "secondary";
+      default:
+        return "default";
+    }
+  };
+
+  const riskInfo = getRiskLevel(selectedPatient?.risk_level || "Low");
+  const riskScore = selectedPatient.probability;
+  const patientReport = selectedPatient.report?.patient_report;
+
+  if (!csvResult && predictionType !== "csv") {
+    return (
+      <main className="container mx-auto px-4 py-12 flex flex-col items-center justify-center min-h-screen text-center">
+        <InlineAlert
+          title="No Results Found"
+          description="It looks like you haven't uploaded any data or run a prediction yet."
+        />
+        <p className="mt-4 text-muted-foreground dark:text-gray-400 max-w-md">
+          Please upload a file or enter patient details manually to get a
+          prediction.
+        </p>
+        <button
+          onClick={() => router.push("/upload")}
+          className="mt-6 text-[#44bfb2] text-sm font-medium hover:underline transition"
+        >
+          Go to Upload Page
+        </button>
+      </main>
+    );
+  }
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
       {/* Patient List */}
       <div className="lg:col-span-1">
         <Card className="h-[600px] flex flex-col">
           <div className="p-4 border-b">
-            <h2 className="text-lg font-semibold">Patients (20)</h2>
+            <h2 className="text-lg font-semibold">
+              Patients ({csvResult.reports.length})
+            </h2>
           </div>
           <ScrollArea className="flex-1">
             <div className="p-2 space-y-2">
-              {patientsData.map((patient) => (
+              {csvResult.reports.map((patient) => (
                 <Card
-                  key={patient.id}
+                  key={patient.patient_id}
                   className={`p-3 cursor-pointer transition-all hover:shadow-md ${
-                    selectedPatient.id === patient.id
+                    selectedPatient.patient_id === patient.patient_id
                       ? "ring-2 ring-teal-500 bg-teal-50 dark:bg-teal-900/20"
                       : "hover:bg-gray-50 dark:hover:bg-gray-800"
                   }`}
@@ -80,27 +131,31 @@ export function CsvResult() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium text-sm">{patient.id}</span>
+                      <span className="font-medium text-sm">
+                        P{patient.patient_id}
+                      </span>
                     </div>
                     <Badge
-                      variant={getRiskBadgeVariant(patient.riskScore)}
+                      variant={getRiskBadgeVariant(patient.risk_level)}
                       className="text-xs"
                     >
-                      {getRiskLevel(patient.riskScore).level}
+                      {getRiskLevel(patient.risk_level).level}
                     </Badge>
                   </div>
                   <div className="space-y-1">
-                    <p className="font-medium text-sm truncate">{patient.id}</p>
+                    <p className="font-medium text-sm truncate">
+                      Patient {patient.patient_id}
+                    </p>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">
                         Risk Score:
                       </span>
                       <span
                         className={`text-sm font-bold ${
-                          getRiskLevel(patient.riskScore).color
+                          getRiskLevel(patient.risk_level).color
                         }`}
                       >
-                        {Math.round(patient.riskScore * 100)}%
+                        {Math.round(patient.probability * 100)}%
                       </span>
                     </div>
                   </div>
@@ -115,7 +170,7 @@ export function CsvResult() {
       <div className="lg:col-span-3">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <motion.div
-            key={selectedPatient.id}
+            key={selectedPatient.patient_id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
@@ -129,17 +184,22 @@ export function CsvResult() {
                 </h2>
                 <div className="mb-4">
                   <h3 className="font-bold text-md">
-                    Patient {selectedPatient.id}
+                    Patient {selectedPatient.patient_id}
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    Risk Assessment
+                    {patientReport.report_type || "Risk Assessment"}
                   </p>
+                  {patientReport.generated_at && (
+                    <p className="text-xs text-muted-foreground">
+                      Generated:{" "}
+                      {new Date(patientReport.generated_at).toLocaleString()}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex flex-col items-center justify-center py-6">
                   <div className="relative mb-6">
                     <svg className="w-32 h-32" viewBox="0 0 100 100">
-                      {/* Background circle */}
                       <circle
                         cx="50"
                         cy="50"
@@ -149,8 +209,6 @@ export function CsvResult() {
                         strokeWidth="10"
                         className="dark:stroke-gray-700"
                       />
-
-                      {/* Progress circle */}
                       <motion.circle
                         cx="50"
                         cy="50"
@@ -174,8 +232,6 @@ export function CsvResult() {
                         }}
                         transition={{ duration: 1.5, ease: "easeOut" }}
                       />
-
-                      {/* Percentage text */}
                       <text
                         x="50"
                         y="50"
@@ -195,7 +251,8 @@ export function CsvResult() {
                       {riskInfo.level} Risk
                     </h3>
                     <p className="text-muted-foreground dark:text-gray-400">
-                      Sepsis probability score
+                      {patientReport.risk_assessment.time_frame ||
+                        "Sepsis probability score"}
                     </p>
                   </div>
                 </div>
@@ -204,7 +261,7 @@ export function CsvResult() {
           </motion.div>
 
           <motion.div
-            key={`${selectedPatient.id}-details`}
+            key={`${selectedPatient.patient_id}-details`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
@@ -243,79 +300,197 @@ export function CsvResult() {
                       }`}
                     >
                       <h3 className={`font-semibold mb-1 ${riskInfo.color}`}>
-                        Clinical Assessment for Patient {selectedPatient.id}
+                        Clinical Assessment for Patient{" "}
+                        {selectedPatient.patient_id}
                       </h3>
                       <p className="text-sm text-gray-700 dark:text-gray-300">
-                        {riskScore >= 0.75
-                          ? "The patient shows signs of early-stage sepsis, with elevated respiratory rate and low MAP over 4 hours. Immediate intervention is recommended."
-                          : riskScore >= 0.5
-                          ? "The patient shows moderate risk indicators. Continue monitoring and consider preventive measures."
-                          : "The patient shows low risk for sepsis. Continue routine monitoring and maintain current care plan."}
+                        {patientReport.risk_assessment.interpretation}
                       </p>
+                      {patientReport.risk_assessment.detailed_analysis && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                          {patientReport.risk_assessment.detailed_analysis}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-6">
+                      {/* Risk Factors */}
+                      {patientReport.key_risk_factors &&
+                        patientReport.key_risk_factors.length > 0 && (
+                          <div>
+                            <h3 className="text-lg font-semibold mb-2">
+                              Key Risk Factors
+                            </h3>
+                            <div className="space-y-2">
+                              {(patientReport?.key_risk_factors || []).map(
+                                (factor, index) => (
+                                  <div
+                                    key={index}
+                                    className="border rounded-lg p-3"
+                                  >
+                                    <div className="flex justify-between items-start mb-1">
+                                      <span className="font-medium">
+                                        {factor.marker}
+                                      </span>
+                                      <span className="text-sm text-muted-foreground">
+                                        Importance:{" "}
+                                        {Math.round(factor.importance * 100)}%
+                                      </span>
+                                    </div>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                      {factor.note}
+                                    </p>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                      {/* Clinical Guidance */}
                       <div>
                         <h3 className="text-lg font-semibold mb-2">
-                          Suggested Actions
+                          Recommended Actions
                         </h3>
-                        <ul className="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
-                          {riskScore >= 0.75 ? (
-                            <>
-                              <li>Immediate fluid resuscitation</li>
-                              <li>Blood cultures and lactate measurement</li>
-                              <li>Broad-spectrum antibiotics within 1 hour</li>
-                              <li>Continuous vital sign monitoring</li>
-                            </>
-                          ) : riskScore >= 0.5 ? (
-                            <>
-                              <li>Increase monitoring frequency</li>
-                              <li>Monitor WBC trend</li>
-                              <li>
-                                Consider blood cultures if symptoms worsen
-                              </li>
-                              <li>Review infection control measures</li>
-                            </>
-                          ) : (
-                            <>
-                              <li>Continue routine monitoring</li>
-                              <li>Maintain current care plan</li>
-                              <li>Monitor for any changes in condition</li>
-                              <li>Ensure proper hygiene protocols</li>
-                            </>
-                          )}
-                        </ul>
+                        {patientReport?.clinical_guidance?.required_actions
+                          .length > 0 && (
+                          <ul className="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
+                            {patientReport.clinical_guidance.required_actions.map(
+                              (action, index) => (
+                                <li key={index}>{action}</li>
+                              )
+                            )}
+                          </ul>
+                        )}
                       </div>
 
+                      {/* Monitoring */}
+                      {patientReport?.clinical_guidance?.monitoring.length >
+                        0 && (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2">
+                            Monitoring Requirements
+                          </h3>
+                          <ul className="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
+                            {patientReport?.clinical_guidance?.monitoring.map(
+                              (item, index) => (
+                                <li key={index}>{item}</li>
+                              )
+                            )}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Medications */}
                       <div>
                         <h3 className="text-lg font-semibold mb-2">
-                          Possible Medications
+                          Treatment Options
                         </h3>
-                        <ul className="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
-                          {riskScore >= 0.75 ? (
-                            <>
-                              <li>Piperacillin-tazobactam</li>
-                              <li>Vancomycin (if MRSA risk)</li>
-                              <li>
-                                Consider vasopressors if MAP remains low after
-                                fluid resuscitation
-                              </li>
-                            </>
-                          ) : riskScore >= 0.5 ? (
-                            <>
-                              <li>Consider prophylactic antibiotics</li>
-                              <li>Monitor for need of intervention</li>
-                              <li>Maintain current medications</li>
-                            </>
-                          ) : (
-                            <>
-                              <li>Continue current medication regimen</li>
-                              <li>No additional antibiotics needed</li>
-                              <li>Monitor for any changes</li>
-                            </>
-                          )}
-                        </ul>
+                        {patientReport?.clinical_guidance?.treatment_options
+                          ?.immediate_medications.length > 0 && (
+                          <div className="mb-4">
+                            <h4 className="font-medium mb-2">
+                              Immediate Medications:
+                            </h4>
+                            <ul className="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
+                              {patientReport?.clinical_guidance?.treatment_options?.immediate_medications.map(
+                                (med, index) => (
+                                  <li key={index}>{med}</li>
+                                )
+                              )}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Antibiotic Choices */}
+                        {patientReport?.clinical_guidance?.treatment_options
+                          ?.antibiotic_choices && (
+                          <div>
+                            <h4 className="font-medium mb-2">
+                              Antibiotic Options:
+                            </h4>
+                            {Array.isArray(
+                              patientReport.clinical_guidance.treatment_options
+                                .antibiotic_choices
+                            ) ? (
+                              <ul className="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
+                                {patientReport.clinical_guidance.treatment_options.antibiotic_choices.map(
+                                  (antibiotic, index) => (
+                                    <li key={index}>{antibiotic}</li>
+                                  )
+                                )}
+                              </ul>
+                            ) : (
+                              <div className="space-y-2">
+                                {patientReport.clinical_guidance
+                                  .treatment_options.antibiotic_choices
+                                  .community_acquired && (
+                                  <div>
+                                    <span className="font-medium">
+                                      Community Acquired:
+                                    </span>
+                                    <ul className="list-disc pl-5 mt-1">
+                                      {patientReport.clinical_guidance.treatment_options.antibiotic_choices.community_acquired.map(
+                                        (antibiotic, index) => (
+                                          <li key={index}>{antibiotic}</li>
+                                        )
+                                      )}
+                                    </ul>
+                                  </div>
+                                )}
+                                {patientReport.clinical_guidance
+                                  .treatment_options.antibiotic_choices
+                                  .hospital_acquired && (
+                                  <div>
+                                    <span className="font-medium">
+                                      Hospital Acquired:
+                                    </span>
+                                    <ul className="list-disc pl-5 mt-1">
+                                      {patientReport.clinical_guidance.treatment_options.antibiotic_choices.hospital_acquired.map(
+                                        (antibiotic, index) => (
+                                          <li key={index}>{antibiotic}</li>
+                                        )
+                                      )}
+                                    </ul>
+                                  </div>
+                                )}
+                                {patientReport.clinical_guidance
+                                  .treatment_options.antibiotic_choices
+                                  .penicillin_allergy && (
+                                  <div>
+                                    <span className="font-medium">
+                                      Penicillin Allergy:
+                                    </span>
+                                    <ul className="list-disc pl-5 mt-1">
+                                      {patientReport.clinical_guidance.treatment_options.antibiotic_choices.penicillin_allergy.map(
+                                        (antibiotic, index) => (
+                                          <li key={index}>{antibiotic}</li>
+                                        )
+                                      )}
+                                    </ul>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
+
+                      {/* Safety Alerts */}
+                      {patientReport.safety_alerts?.precautions?.length > 0 && (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2">
+                            Safety Precautions
+                          </h3>
+                          <ul className="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
+                            {patientReport.safety_alerts.precautions.map(
+                              (precaution, index) => (
+                                <li key={index}>{precaution}</li>
+                              )
+                            )}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -323,7 +498,6 @@ export function CsvResult() {
                     <Link href="/upload">
                       <Button variant="outline">Regenerate Report</Button>
                     </Link>
-
                     <Button className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600">
                       <Link className="flex items-center gap-2" href="/export">
                         <Download className="h-4 w-4" /> Export Report
@@ -339,54 +513,32 @@ export function CsvResult() {
                     </h3>
 
                     <div className="space-y-4">
-                      {[
-                        {
-                          name: "Respiratory Rate",
-                          value: riskScore * 0.9,
-                          color: "bg-red-500 dark:bg-red-600",
-                        },
-                        {
-                          name: "Mean Arterial Pressure",
-                          value: riskScore * 0.8,
-                          color: "bg-orange-500 dark:bg-orange-600",
-                        },
-                        {
-                          name: "Heart Rate",
-                          value: riskScore * 0.7,
-                          color: "bg-amber-500 dark:bg-amber-600",
-                        },
-                        {
-                          name: "Temperature",
-                          value: riskScore * 0.6,
-                          color: "bg-yellow-500 dark:bg-yellow-600",
-                        },
-                        {
-                          name: "O2 Saturation",
-                          value: riskScore * 0.5,
-                          color: "bg-teal-500 dark:bg-teal-600",
-                        },
-                        {
-                          name: "WBC Count",
-                          value: riskScore * 0.4,
-                          color: "bg-green-500 dark:bg-green-600",
-                        },
-                      ].map((feature, index) => (
+                      {patientReport.key_risk_factors.map((factor, index) => (
                         <div key={index} className="space-y-1">
                           <div className="flex justify-between text-sm">
-                            <span>{feature.name}</span>
+                            <span>{factor.marker}</span>
                             <span className="font-medium">
-                              {Math.round(feature.value * 100)}%
+                              {Math.round(factor.importance * 100)}%
                             </span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
                             <motion.div
-                              className={`h-2.5 rounded-full ${feature.color}`}
-                              style={{ width: `${feature.value * 100}%` }}
+                              className={`h-2.5 rounded-full ${
+                                factor.importance >= 0.75
+                                  ? "bg-red-500 dark:bg-red-600"
+                                  : factor.importance >= 0.5
+                                  ? "bg-amber-500 dark:bg-amber-600"
+                                  : "bg-green-500 dark:bg-green-600"
+                              }`}
+                              style={{ width: `${factor.importance * 100}%` }}
                               initial={{ width: 0 }}
-                              animate={{ width: `${feature.value * 100}%` }}
+                              animate={{ width: `${factor.importance * 100}%` }}
                               transition={{ duration: 1, delay: index * 0.1 }}
                             />
                           </div>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                            {factor.note}
+                          </p>
                         </div>
                       ))}
                     </div>
@@ -396,12 +548,8 @@ export function CsvResult() {
                         Interpretation
                       </h3>
                       <p className="text-gray-700 dark:text-gray-300">
-                        For Patient {selectedPatient.id}, the model identified{" "}
-                        {riskScore >= 0.75
-                          ? "elevated respiratory rate and decreased mean arterial pressure as the strongest indicators of sepsis risk."
-                          : riskScore >= 0.5
-                          ? "moderate deviations in vital signs that warrant continued monitoring."
-                          : "stable vital signs with minimal risk indicators for sepsis development."}
+                        {patientReport.risk_assessment.detailed_analysis ||
+                          patientReport.risk_assessment.interpretation}
                       </p>
                     </div>
                   </div>

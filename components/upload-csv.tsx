@@ -95,18 +95,37 @@ const UploadCsv = () => {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch(`${BASE_API_URL}/api/v1/csv_predict`, {
-        method: "POST",
-        body: formData,
-      });
+      const predictionResponse = await fetch(
+        `${BASE_API_URL}/api/v1/csv_predict`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!predictionResponse.ok) {
+        const errorData = await predictionResponse.json();
         throw new Error(errorData.detail || "Failed to run prediction");
       }
 
-      const result = await response.json();
-      dispatch(setCsvPredictionResult(result));
+      const predictionResult = await predictionResponse.json();
+      //2.
+      const reportResponse = await fetch(
+        `${BASE_API_URL}/api/v1/reports/batch`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(predictionResult),
+        }
+      );
+      if (!reportResponse.ok) {
+        const errorData = await reportResponse.json();
+        throw new Error(errorData.detail || "Failed to submit report");
+      }
+      const finalResult = await reportResponse.json();
+      dispatch(setCsvPredictionResult(finalResult));
 
       toast({
         title: "Prediction Successful",

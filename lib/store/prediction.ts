@@ -1,8 +1,55 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-interface CsvPredictionResult {
-  auc: number;
-  threshold: number;
+export interface CsvPredictionResult {
+  patient_id: number;
+  risk_level: string;
+  probability: number;
+  success: boolean;
+  report: {
+    patient_report: {
+      patient_id: number;
+      report_type: string;
+      generated_at?: string;
+      risk_probability: string;
+      risk_assessment: {
+        level: string;
+        score: number | string;
+        time_frame: string;
+        interpretation: string;
+        detailed_analysis: string;
+      };
+      key_risk_factors: Array<{
+        marker: string;
+        importance: number;
+        note: string;
+      }>;
+      clinical_guidance: {
+        monitoring: string[];
+        diagnostic_tests: string[];
+        treatment_options: {
+          immediate_medications: string[];
+          antibiotic_choices: string[] | {
+            community_acquired?: string[];
+            hospital_acquired?: string[];
+            penicillin_allergy?: string[];
+          };
+        };
+        required_actions: string[];
+      };
+      safety_alerts: {
+        precautions: string[];
+      };
+      disclaimers: {
+        model_use: string;
+        physician_oversight: string;
+        limitations: string;
+      };
+    };
+  };
+}
+// Meta info for CSV batch prediction
+export interface CsvPredictionMeta {
+  threshold_used: number;
   metrics: {
     accuracy: number;
     precision: number;
@@ -11,13 +58,18 @@ interface CsvPredictionResult {
     auc: number;
     confusion_matrix: number[][];
   };
-  shap_values: {
-    time_series: Record<string, number>;
-    categorical: Record<string, number>;
-    top_features: Record<string, number>;
-  };
+  total_patients: number;
+  successful_reports: number;
+  failed_reports: number;
 }
 
+// Full CSV prediction response
+export interface CsvPredictionResultBatch {
+  success: boolean;
+  reports: CsvPredictionResult[];
+  errors: any[];
+  meta: CsvPredictionMeta;
+}
 interface ManualPredictionResult {
   risk_assessment: {
     score: number;
@@ -48,7 +100,7 @@ interface ManualPredictionResult {
 }
 
 interface PredictionState {
-  csvResult: CsvPredictionResult | null;
+ csvResult: CsvPredictionResultBatch | null;
   manualResult: ManualPredictionResult | null;
   loading: boolean;
   error: string | null;
@@ -67,7 +119,7 @@ const predictionSlice = createSlice({
   name: "prediction",
   initialState,
   reducers: {
-    setCsvPredictionResult(state, action: PayloadAction<CsvPredictionResult>) {
+    setCsvPredictionResult(state, action: PayloadAction<CsvPredictionResultBatch>) {
       state.csvResult = action.payload;
       state.manualResult = null;
       state.predictionType = 'csv';
