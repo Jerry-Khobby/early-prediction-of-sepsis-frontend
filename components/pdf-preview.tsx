@@ -39,7 +39,7 @@ export function PDFPreview() {
   return (
     <div>
       {predictionType === "manual" && manualResult && <ManualExport />}
-      {predictionType === "csv" && manualResult && <CsvExport />}
+      {predictionType === "csv" && csvResult && <CsvExport />}
     </div>
   );
 }

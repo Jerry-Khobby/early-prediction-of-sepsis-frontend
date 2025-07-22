@@ -19,13 +19,25 @@ import {
   prepareReportData,
   type PDFOptions,
 } from "@/components/pdf-service";
+import {
+  downloadPDFCsv,
+  emailPDFCsv,
+  prepareReportDataCsv,
+  type PDFOptions as PDFOptionsCsv,
+} from "@/components/pdf-service-csv";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function ExportPage() {
   const router = useRouter();
-  const { csvResult, manualResult, predictionType } = useAppSelector(
-    (state) => state.prediction
-  );
+  const { csvResult, manualResult, selectedPatientId, predictionType } =
+    useAppSelector((state) => state.prediction);
+
+  const selectedPatientExport =
+    csvResult && selectedPatientId
+      ? csvResult.reports.find(
+          (report) => report.patient_id === selectedPatientId
+        )
+      : null;
   const [noResult, setNoResult] = useState(false);
   const { toast } = useToast();
   const [email, setEmail] = useState("");
@@ -38,7 +50,6 @@ export default function ExportPage() {
     recommendations: true,
     patientData: true,
   });
-
   useEffect(() => {
     if (!csvResult && !manualResult) {
       setNoResult(true);
@@ -88,28 +99,38 @@ export default function ExportPage() {
     try {
       setIsEmailing(true);
 
-      // Prepare report data based on prediction type
-      const reportData = prepareReportData(
-        predictionType === "manual" ? manualResult : csvResult,
-        "SepsisAI"
-      );
-
-      const options: PDFOptions = {
-        reportType: "SepsisAI",
-        includeOptions,
-        style: {
-          primaryColor: [21, 94, 99], // Teal color
-        },
-      };
-
-      await emailPDF(reportData, options, email);
+      if (predictionType === "csv") {
+        const reportData = prepareReportDataCsv(
+          selectedPatientExport?.report,
+          "SepsisAI"
+        );
+        const options: PDFOptionsCsv = {
+          reportType: "SepsisAI",
+          includeOptions,
+          style: {
+            primaryColor: [21, 94, 99], // Teal color
+          },
+        };
+        await emailPDFCsv(reportData, options, email);
+      }
+      if (predictionType === "manual") {
+        const reportData = prepareReportData(manualResult, "SepsisAI");
+        const options: PDFOptions = {
+          reportType: "SepsisAI",
+          includeOptions,
+          style: {
+            primaryColor: [21, 94, 99], // Teal color
+          },
+        };
+        await emailPDF(reportData, options, email);
+      }
 
       toast({
         title: "Email Sent",
         description: `The report has been sent to ${email}`,
       });
 
-      setEmail("")
+      setEmail("");
     } catch (error) {
       toast({
         title: "Error",
@@ -124,26 +145,39 @@ export default function ExportPage() {
   const handleDownload = async () => {
     try {
       setIsDownloading(true);
-
-      // Prepare report data based on prediction type
-      const reportData = prepareReportData(
-        predictionType === "manual" ? manualResult : csvResult,
-        "SepsisAI"
-      );
-
-      const options: PDFOptions = {
-        reportType: "SepsisAI",
-        includeOptions,
-        style: {
-          primaryColor: [21, 94, 99], // Teal color
-        },
-      };
-
-      await downloadPDF(
-        reportData,
-        options,
-        `sepsis-report-${new Date().toISOString().split("T")[0]}.pdf`
-      );
+      if (predictionType === "csv") {
+        const reportData = prepareReportDataCsv(
+          selectedPatientExport?.report,
+          "SepsisAI"
+        );
+        const options: PDFOptionsCsv = {
+          reportType: "SepsisAI",
+          includeOptions,
+          style: {
+            primaryColor: [21, 94, 99], // Teal color
+          },
+        };
+        await downloadPDFCsv(
+          reportData,
+          options,
+          `sepsis-report-${new Date().toISOString().split("T")[0]}.pdf`
+        );
+      }
+      if (predictionType === "manual") {
+        const reportData = prepareReportData(manualResult, "SepsisAI");
+        const options: PDFOptions = {
+          reportType: "SepsisAI",
+          includeOptions,
+          style: {
+            primaryColor: [21, 94, 99], // Teal color
+          },
+        };
+        await downloadPDF(
+          reportData,
+          options,
+          `sepsis-report-${new Date().toISOString().split("T")[0]}.pdf`
+        );
+      }
 
       toast({
         title: "Download Complete",

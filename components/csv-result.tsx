@@ -6,27 +6,23 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle, FileText, BarChart2, Download } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { PredictionLoading } from "./predictionLoading";
 import Link from "next/link";
 import { ScrollArea } from "./ui/scroll-area";
 import { Badge } from "./ui/badge";
 import { User } from "lucide-react";
-import { InlineAlert } from "./ui/inline-alert";
+import { RootState } from "@/lib/store/store";
 import { useAppSelector } from "@/lib/store/hook";
-
 import { CsvPredictionResult } from "@/lib/store/prediction";
 
-
-// The error I was facing here was ,  the data structure of displaying the results 
-
 export function CsvResult() {
-  const { csvResult, predictionType } = useAppSelector(
-    (state) => state.prediction
+  const router = useRouter();
+  const { csvResult, loading, error, predictionType } = useAppSelector(
+    (state: RootState) => state.prediction
   );
   const [selectedPatient, setSelectedPatient] =
     useState<CsvPredictionResult | null>(null);
-  const router = useRouter();
 
-  // Set first patient as selected when component mounts or csvResult changes
   useEffect(() => {
     if (
       csvResult?.reports &&
@@ -35,77 +31,38 @@ export function CsvResult() {
     ) {
       setSelectedPatient(csvResult.reports[0]);
     }
-  }, [csvResult]);
+  }, [csvResult, selectedPatient]);
 
-  // Return early if no CSV results
-  if (!csvResult || !csvResult.reports || csvResult.reports.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-muted-foreground">
-          No CSV prediction results available
-        </p>
-      </div>
-    );
-  }
-  if (!selectedPatient || !selectedPatient.report?.patient_report) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-muted-foreground">Loading patient data...</p>
-      </div>
-    );
-  }
+  if (loading) return <PredictionLoading />;
+  if (error) return <div>Error: {error}</div>;
+  if (!csvResult) return <div>No results available</div>;
 
-  const getRiskLevel = (level: string) => {
-    switch (level.toLowerCase()) {
-      case "high":
-        return { level: "High", color: "text-red-600 dark:text-red-400" };
-      case "moderate":
-      case "medium":
-        return {
-          level: "Moderate",
-          color: "text-amber-600 dark:text-amber-400",
-        };
-      default:
-        return { level: "Low", color: "text-green-600 dark:text-green-400" };
-    }
+  const getRiskLevel = (score: number) => {
+    if (score >= 0.75)
+      return { level: "High", color: "text-red-600 dark:text-red-400" };
+    if (score >= 0.5)
+      return {
+        level: "Moderate",
+        color: "text-amber-600 dark:text-amber-400",
+      };
+    return { level: "Low", color: "text-green-600 dark:text-green-400" };
   };
 
-  const getRiskBadgeVariant = (level: string) => {
-    switch (level.toLowerCase()) {
-      case "high":
-        return "destructive";
-      case "moderate":
-      case "medium":
-        return "secondary";
-      default:
-        return "default";
-    }
+  const getRiskBadgeVariant = (score: number) => {
+    if (score >= 0.75) return "destructive";
+    if (score >= 0.5) return "secondary";
+    return "default";
   };
 
-  const riskInfo = getRiskLevel(selectedPatient?.risk_level || "Low");
-  const riskScore = selectedPatient.probability;
-  const patientReport = selectedPatient.report?.patient_report;
+  if (!selectedPatient) return <div>No patient selected</div>;
 
-  if (!csvResult && predictionType !== "csv") {
-    return (
-      <main className="container mx-auto px-4 py-12 flex flex-col items-center justify-center min-h-screen text-center">
-        <InlineAlert
-          title="No Results Found"
-          description="It looks like you haven't uploaded any data or run a prediction yet."
-        />
-        <p className="mt-4 text-muted-foreground dark:text-gray-400 max-w-md">
-          Please upload a file or enter patient details manually to get a
-          prediction.
-        </p>
-        <button
-          onClick={() => router.push("/upload")}
-          className="mt-6 text-[#44bfb2] text-sm font-medium hover:underline transition"
-        >
-          Go to Upload Page
-        </button>
-      </main>
-    );
-  }
+  const riskScore = selectedPatient?.probability || 0;
+  const riskInfo = getRiskLevel(riskScore);
+  const report = selectedPatient?.report;
+
+  console.log("Selected Patient Report:", report);
+  console.log("Key risk factor", report?.key_risk_factors);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
       {/* Patient List */}
@@ -113,16 +70,16 @@ export function CsvResult() {
         <Card className="h-[600px] flex flex-col">
           <div className="p-4 border-b">
             <h2 className="text-lg font-semibold">
-              Patients ({csvResult.reports.length})
+              Patients ({csvResult?.reports?.length || 0})
             </h2>
           </div>
           <ScrollArea className="flex-1">
             <div className="p-2 space-y-2">
-              {csvResult.reports.map((patient) => (
+              {csvResult?.reports?.map((patient) => (
                 <Card
-                  key={patient.patient_id}
+                  key={patient?.patient_id}
                   className={`p-3 cursor-pointer transition-all hover:shadow-md ${
-                    selectedPatient.patient_id === patient.patient_id
+                    selectedPatient?.patient_id === patient?.patient_id
                       ? "ring-2 ring-teal-500 bg-teal-50 dark:bg-teal-900/20"
                       : "hover:bg-gray-50 dark:hover:bg-gray-800"
                   }`}
@@ -132,19 +89,19 @@ export function CsvResult() {
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium text-sm">
-                        P{patient.patient_id}
+                        {patient?.patient_id}
                       </span>
                     </div>
                     <Badge
-                      variant={getRiskBadgeVariant(patient.risk_level)}
+                      variant={getRiskBadgeVariant(patient?.probability || 0)}
                       className="text-xs"
                     >
-                      {getRiskLevel(patient.risk_level).level}
+                      {getRiskLevel(patient?.probability || 0).level}
                     </Badge>
                   </div>
                   <div className="space-y-1">
                     <p className="font-medium text-sm truncate">
-                      Patient {patient.patient_id}
+                      Patient {patient?.patient_id}
                     </p>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">
@@ -152,10 +109,10 @@ export function CsvResult() {
                       </span>
                       <span
                         className={`text-sm font-bold ${
-                          getRiskLevel(patient.risk_level).color
+                          getRiskLevel(patient?.probability || 0).color
                         }`}
                       >
-                        {Math.round(patient.probability * 100)}%
+                        {Math.round((patient?.probability || 0) * 100)}%
                       </span>
                     </div>
                   </div>
@@ -170,7 +127,7 @@ export function CsvResult() {
       <div className="lg:col-span-3">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <motion.div
-            key={selectedPatient.patient_id}
+            key={`risk-assessment-${selectedPatient?.patient_id}`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
@@ -184,22 +141,17 @@ export function CsvResult() {
                 </h2>
                 <div className="mb-4">
                   <h3 className="font-bold text-md">
-                    Patient {selectedPatient.patient_id}
+                    Patient {selectedPatient?.patient_id}
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    {patientReport.report_type || "Risk Assessment"}
+                    {report?.risk_assessment?.time_frame}
                   </p>
-                  {patientReport.generated_at && (
-                    <p className="text-xs text-muted-foreground">
-                      Generated:{" "}
-                      {new Date(patientReport.generated_at).toLocaleString()}
-                    </p>
-                  )}
                 </div>
 
                 <div className="flex flex-col items-center justify-center py-6">
                   <div className="relative mb-6">
                     <svg className="w-32 h-32" viewBox="0 0 100 100">
+                      {/* Background circle */}
                       <circle
                         cx="50"
                         cy="50"
@@ -209,6 +161,8 @@ export function CsvResult() {
                         strokeWidth="10"
                         className="dark:stroke-gray-700"
                       />
+
+                      {/* Progress circle */}
                       <motion.circle
                         cx="50"
                         cy="50"
@@ -232,6 +186,8 @@ export function CsvResult() {
                         }}
                         transition={{ duration: 1.5, ease: "easeOut" }}
                       />
+
+                      {/* Percentage text */}
                       <text
                         x="50"
                         y="50"
@@ -248,11 +204,10 @@ export function CsvResult() {
 
                   <div className="text-center">
                     <h3 className={`text-xl font-bold mb-1 ${riskInfo.color}`}>
-                      {riskInfo.level} Risk
+                      {report?.risk_assessment?.level}
                     </h3>
                     <p className="text-muted-foreground dark:text-gray-400">
-                      {patientReport.risk_assessment.time_frame ||
-                        "Sepsis probability score"}
+                      {report?.risk_assessment?.time_frame}
                     </p>
                   </div>
                 </div>
@@ -261,7 +216,7 @@ export function CsvResult() {
           </motion.div>
 
           <motion.div
-            key={`${selectedPatient.patient_id}-details`}
+            key={`${selectedPatient?.patient_id}-details`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
@@ -301,196 +256,146 @@ export function CsvResult() {
                     >
                       <h3 className={`font-semibold mb-1 ${riskInfo.color}`}>
                         Clinical Assessment for Patient{" "}
-                        {selectedPatient.patient_id}
+                        {selectedPatient?.patient_id}
                       </h3>
                       <p className="text-sm text-gray-700 dark:text-gray-300">
-                        {patientReport.risk_assessment.interpretation}
+                        {report?.risk_assessment?.interpretation}
                       </p>
-                      {patientReport.risk_assessment.detailed_analysis && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                          {patientReport.risk_assessment.detailed_analysis}
-                        </p>
-                      )}
                     </div>
 
                     <div className="space-y-6">
-                      {/* Risk Factors */}
-                      {patientReport.key_risk_factors &&
-                        patientReport.key_risk_factors.length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-2">
+                          Clinical Guidance
+                        </h3>
+                        <div className="space-y-4">
                           <div>
-                            <h3 className="text-lg font-semibold mb-2">
-                              Key Risk Factors
-                            </h3>
-                            <div className="space-y-2">
-                              {(patientReport?.key_risk_factors || []).map(
-                                (factor, index) => (
-                                  <div
-                                    key={index}
-                                    className="border rounded-lg p-3"
-                                  >
-                                    <div className="flex justify-between items-start mb-1">
-                                      <span className="font-medium">
-                                        {factor.marker}
-                                      </span>
-                                      <span className="text-sm text-muted-foreground">
-                                        Importance:{" "}
-                                        {Math.round(factor.importance * 100)}%
-                                      </span>
-                                    </div>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                                      {factor.note}
-                                    </p>
-                                  </div>
-                                )
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                      {/* Clinical Guidance */}
-                      <div>
-                        <h3 className="text-lg font-semibold mb-2">
-                          Recommended Actions
-                        </h3>
-                        {patientReport?.clinical_guidance?.required_actions
-                          .length > 0 && (
-                          <ul className="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
-                            {patientReport.clinical_guidance.required_actions.map(
-                              (action, index) => (
-                                <li key={index}>{action}</li>
-                              )
-                            )}
-                          </ul>
-                        )}
-                      </div>
-
-                      {/* Monitoring */}
-                      {patientReport?.clinical_guidance?.monitoring.length >
-                        0 && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-2">
-                            Monitoring Requirements
-                          </h3>
-                          <ul className="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
-                            {patientReport?.clinical_guidance?.monitoring.map(
-                              (item, index) => (
-                                <li key={index}>{item}</li>
-                              )
-                            )}
-                          </ul>
-                        </div>
-                      )}
-
-                      {/* Medications */}
-                      <div>
-                        <h3 className="text-lg font-semibold mb-2">
-                          Treatment Options
-                        </h3>
-                        {patientReport?.clinical_guidance?.treatment_options
-                          ?.immediate_medications.length > 0 && (
-                          <div className="mb-4">
-                            <h4 className="font-medium mb-2">
-                              Immediate Medications:
-                            </h4>
-                            <ul className="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
-                              {patientReport?.clinical_guidance?.treatment_options?.immediate_medications.map(
-                                (med, index) => (
-                                  <li key={index}>{med}</li>
-                                )
-                              )}
+                            <h4 className="font-medium mb-1">Monitoring</h4>
+                            <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700 dark:text-gray-300">
+                              {report?.clinical_guidance?.monitoring?.map(
+                                (item, i) => <li key={i}>{item}</li>
+                              ) || []}
                             </ul>
                           </div>
-                        )}
 
-                        {/* Antibiotic Choices */}
-                        {patientReport?.clinical_guidance?.treatment_options
-                          ?.antibiotic_choices && (
                           <div>
-                            <h4 className="font-medium mb-2">
-                              Antibiotic Options:
+                            <h4 className="font-medium mb-1">
+                              Diagnostic Tests
                             </h4>
-                            {Array.isArray(
-                              patientReport.clinical_guidance.treatment_options
-                                .antibiotic_choices
-                            ) ? (
-                              <ul className="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
-                                {patientReport.clinical_guidance.treatment_options.antibiotic_choices.map(
-                                  (antibiotic, index) => (
-                                    <li key={index}>{antibiotic}</li>
-                                  )
-                                )}
-                              </ul>
-                            ) : (
-                              <div className="space-y-2">
-                                {patientReport.clinical_guidance
-                                  .treatment_options.antibiotic_choices
-                                  .community_acquired && (
-                                  <div>
-                                    <span className="font-medium">
-                                      Community Acquired:
-                                    </span>
-                                    <ul className="list-disc pl-5 mt-1">
-                                      {patientReport.clinical_guidance.treatment_options.antibiotic_choices.community_acquired.map(
-                                        (antibiotic, index) => (
-                                          <li key={index}>{antibiotic}</li>
-                                        )
-                                      )}
-                                    </ul>
-                                  </div>
-                                )}
-                                {patientReport.clinical_guidance
-                                  .treatment_options.antibiotic_choices
-                                  .hospital_acquired && (
-                                  <div>
-                                    <span className="font-medium">
-                                      Hospital Acquired:
-                                    </span>
-                                    <ul className="list-disc pl-5 mt-1">
-                                      {patientReport.clinical_guidance.treatment_options.antibiotic_choices.hospital_acquired.map(
-                                        (antibiotic, index) => (
-                                          <li key={index}>{antibiotic}</li>
-                                        )
-                                      )}
-                                    </ul>
-                                  </div>
-                                )}
-                                {patientReport.clinical_guidance
-                                  .treatment_options.antibiotic_choices
-                                  .penicillin_allergy && (
-                                  <div>
-                                    <span className="font-medium">
-                                      Penicillin Allergy:
-                                    </span>
-                                    <ul className="list-disc pl-5 mt-1">
-                                      {patientReport.clinical_guidance.treatment_options.antibiotic_choices.penicillin_allergy.map(
-                                        (antibiotic, index) => (
-                                          <li key={index}>{antibiotic}</li>
-                                        )
-                                      )}
-                                    </ul>
-                                  </div>
-                                )}
-                              </div>
-                            )}
+                            <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700 dark:text-gray-300">
+                              {report?.clinical_guidance?.diagnostic_tests?.map(
+                                (item, i) => <li key={i}>{item}</li>
+                              ) || []}
+                            </ul>
                           </div>
-                        )}
+
+                          <div>
+                            <h4 className="font-medium mb-1">
+                              Treatment Options
+                            </h4>
+                            <div className="pl-5 space-y-2">
+                              <div>
+                                <p className="font-medium text-sm">
+                                  Immediate Medications:
+                                </p>
+                                <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700 dark:text-gray-300">
+                                  {report?.clinical_guidance?.treatment_options?.immediate_medications?.map(
+                                    (item, i) => <li key={i}>{item}</li>
+                                  ) || []}
+                                </ul>
+                              </div>
+                              <div>
+                                <p className="font-medium text-sm">
+                                  Antibiotic Choices:
+                                </p>
+                                <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700 dark:text-gray-300">
+                                  {Array.isArray(
+                                    report?.clinical_guidance?.treatment_options
+                                      ?.antibiotic_choices
+                                  ) ? (
+                                    report?.clinical_guidance?.treatment_options?.antibiotic_choices?.map(
+                                      (item, i) => <li key={i}>{item}</li>
+                                    )
+                                  ) : (
+                                    <>
+                                      {report?.clinical_guidance
+                                        ?.treatment_options?.antibiotic_choices
+                                        ?.community_acquired && (
+                                        <>
+                                          <li className="font-medium">
+                                            Community Acquired:
+                                          </li>
+                                          {report?.clinical_guidance?.treatment_options?.antibiotic_choices?.community_acquired?.map(
+                                            (item, i) => (
+                                              <li key={i} className="pl-5">
+                                                {item}
+                                              </li>
+                                            )
+                                          ) || []}
+                                        </>
+                                      )}
+                                      {report?.clinical_guidance
+                                        ?.treatment_options?.antibiotic_choices
+                                        ?.hospital_acquired && (
+                                        <>
+                                          <li className="font-medium">
+                                            Hospital Acquired:
+                                          </li>
+                                          {report?.clinical_guidance?.treatment_options?.antibiotic_choices?.hospital_acquired?.map(
+                                            (item, i) => (
+                                              <li key={i} className="pl-5">
+                                                {item}
+                                              </li>
+                                            )
+                                          ) || []}
+                                        </>
+                                      )}
+                                      {report?.clinical_guidance
+                                        ?.treatment_options?.antibiotic_choices
+                                        ?.penicillin_allergy && (
+                                        <>
+                                          <li className="font-medium">
+                                            Penicillin Allergy:
+                                          </li>
+                                          {report?.clinical_guidance?.treatment_options?.antibiotic_choices?.penicillin_allergy?.map(
+                                            (item, i) => (
+                                              <li key={i} className="pl-5">
+                                                {item}
+                                              </li>
+                                            )
+                                          ) || []}
+                                        </>
+                                      )}
+                                    </>
+                                  )}
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div>
+                            <h4 className="font-medium mb-1">
+                              Required Actions
+                            </h4>
+                            <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700 dark:text-gray-300">
+                              {report?.clinical_guidance?.required_actions?.map(
+                                (item, i) => <li key={i}>{item}</li>
+                              ) || []}
+                            </ul>
+                          </div>
+                        </div>
                       </div>
 
-                      {/* Safety Alerts */}
-                      {patientReport.safety_alerts?.precautions?.length > 0 && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-2">
-                            Safety Precautions
-                          </h3>
-                          <ul className="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
-                            {patientReport.safety_alerts.precautions.map(
-                              (precaution, index) => (
-                                <li key={index}>{precaution}</li>
-                              )
-                            )}
-                          </ul>
-                        </div>
-                      )}
+                      <div>
+                        <h3 className="text-lg font-semibold mb-2">
+                          Safety Alerts
+                        </h3>
+                        <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700 dark:text-gray-300">
+                          {report?.safety_alerts?.precautions?.map(
+                            (item, i) => <li key={i}>{item}</li>
+                          ) || []}
+                        </ul>
+                      </div>
                     </div>
                   </div>
 
@@ -498,6 +403,7 @@ export function CsvResult() {
                     <Link href="/upload">
                       <Button variant="outline">Regenerate Report</Button>
                     </Link>
+
                     <Button className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600">
                       <Link className="flex items-center gap-2" href="/export">
                         <Download className="h-4 w-4" /> Export Report
@@ -513,44 +419,55 @@ export function CsvResult() {
                     </h3>
 
                     <div className="space-y-4">
-                      {patientReport.key_risk_factors.map((factor, index) => (
+                      {report?.key_risk_factors?.map((factor, index) => (
                         <div key={index} className="space-y-1">
                           <div className="flex justify-between text-sm">
-                            <span>{factor.marker}</span>
+                            <span>{factor?.marker}</span>
                             <span className="font-medium">
-                              {Math.round(factor.importance * 100)}%
+                              {Math.round((factor?.importance || 0) * 100)}%
                             </span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
                             <motion.div
                               className={`h-2.5 rounded-full ${
-                                factor.importance >= 0.75
+                                (factor?.importance || 0) >= 0.15
                                   ? "bg-red-500 dark:bg-red-600"
-                                  : factor.importance >= 0.5
-                                  ? "bg-amber-500 dark:bg-amber-600"
-                                  : "bg-green-500 dark:bg-green-600"
+                                  : (factor?.importance || 0) >= 0.1
+                                  ? "bg-orange-500 dark:bg-orange-600"
+                                  : "bg-amber-500 dark:bg-amber-600"
                               }`}
-                              style={{ width: `${factor.importance * 100}%` }}
+                              style={{
+                                width: `${(factor?.importance || 0) * 100}%`,
+                              }}
                               initial={{ width: 0 }}
-                              animate={{ width: `${factor.importance * 100}%` }}
+                              animate={{
+                                width: `${(factor?.importance || 0) * 100}%`,
+                              }}
                               transition={{ duration: 1, delay: index * 0.1 }}
                             />
                           </div>
-                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                            {factor.note}
-                          </p>
                         </div>
-                      ))}
+                      )) || []}
                     </div>
 
                     <div className="mt-8">
                       <h3 className="text-lg font-semibold mb-2">
-                        Interpretation
+                        Detailed Analysis
                       </h3>
-                      <p className="text-gray-700 dark:text-gray-300">
-                        {patientReport.risk_assessment.detailed_analysis ||
-                          patientReport.risk_assessment.interpretation}
+                      <p className="text-gray-700 dark:text-gray-300 text-sm">
+                        {report?.risk_assessment?.detailed_analysis}
                       </p>
+                    </div>
+
+                    <div className="mt-6">
+                      <h3 className="text-lg font-semibold mb-2">
+                        Disclaimers
+                      </h3>
+                      <div className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
+                        <p>{report?.disclaimers?.model_use}</p>
+                        <p>{report?.disclaimers?.physician_oversight}</p>
+                        <p>{report?.disclaimers?.limitations}</p>
+                      </div>
                     </div>
                   </div>
                 </TabsContent>
