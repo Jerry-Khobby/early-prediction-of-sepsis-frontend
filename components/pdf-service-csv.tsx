@@ -397,6 +397,20 @@ function addModelExplanation(
     yPos = 20;
   }
 
+  // Define an array of distinct colors for the bars
+  const barColors: [number, number, number][] = [
+    [255, 99, 132], // Red
+    [54, 162, 235], // Blue
+    [255, 206, 86], // Yellow
+    [75, 192, 192], // Teal
+    [153, 102, 255], // Purple
+    [255, 159, 64], // Orange
+    [199, 199, 199], // Gray
+    [83, 102, 255], // Indigo
+    [40, 167, 69], // Green
+    [220, 53, 69], // Crimson
+  ];
+
   doc.setTextColor(0, 0, 0);
   doc.setFontSize(14);
   doc.setFont(font, "bold");
@@ -404,10 +418,9 @@ function addModelExplanation(
 
   yPos += 10;
 
-  // Feature importance visualization
   const sortedFeatures = [...riskFactors]
     .sort((a, b) => Math.abs(b.importance) - Math.abs(a.importance))
-    .slice(0, 10); // Limit to top 10 features
+    .slice(0, 10);
 
   if (sortedFeatures.length === 0) {
     doc.setFontSize(11);
@@ -415,10 +428,6 @@ function addModelExplanation(
     doc.text("No feature importance data available.", 15, yPos);
     return yPos + 10;
   }
-
-  const maxValue = Math.max(
-    ...sortedFeatures.map((f) => Math.abs(f.importance))
-  );
 
   sortedFeatures.forEach((feature, index) => {
     const percentage = Math.abs(feature.importance) * 10;
@@ -431,8 +440,9 @@ function addModelExplanation(
     doc.setFillColor(220, 220, 220);
     doc.rect(100, yPos - 4, 80, 5, "F");
 
-    // Draw feature importance bar with primary color
-    doc.setFillColor(...primaryColor);
+    // Get color and apply it
+    const [r, g, b] = barColors[index % barColors.length];
+    doc.setFillColor(r, g, b);
     doc.rect(100, yPos - 4, 80 * (percentage / 100), 5, "F");
 
     yPos += 8;
